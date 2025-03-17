@@ -3,7 +3,12 @@
     .version = "0.0.0",
     .fingerprint = 0xa217bac17a577543,
     .minimum_zig_version = "0.14.0",
-    .dependencies = .{},
+    .dependencies = .{
+        .xlsxwriter = .{
+            .url = "../zig-xlsxwriter",
+            .hash = "zigxlsxwriter-0.1.0-Bkkot7S-v0hGSgyhbxTyElgI0OAKW3Z5jW-DOWmyz5YP",
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",
