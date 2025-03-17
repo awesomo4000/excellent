@@ -33,11 +33,8 @@ Directories in the project are:
 
 ## Workflow
 
-### Step 1: Status Program
-First, write the "testing/status.zig" program to track progress.
-
-### Step 2: Development Cycle
-After the status program is complete, follow this cycle:
+### Development Cycle
+Follow this cycle:
 
 1. Check what needs to be done:
 ```bash
