@@ -20,16 +20,13 @@ pub fn main() !void {
     worksheet.setColumnWidth(0, 0, 20);
 
     // Add formats with method chaining
-    var bold = try workbook.addFormat();
-    defer bold.deinit();
+    var bold = try workbook.addFormat(); // this will deinit the format, so we don't need to do it manually
     _ = bold.setBold();
 
     var italic = try workbook.addFormat();
-    defer italic.deinit();
     _ = italic.setItalic();
 
     var bold_italic = try workbook.addFormat();
-    defer bold_italic.deinit();
     _ = bold_italic.setBold().setItalic();
 
     // Write some formatted strings using cell references

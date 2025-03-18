@@ -9,7 +9,7 @@ pub const Workbook = struct {
     filename: []const u8,
     workbook: *c.lxw_workbook,
     isOpen: bool = false,
-
+    formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
     pub fn create(
         allocator: std.mem.Allocator,
         filename: []const u8,
@@ -42,6 +42,11 @@ pub const Workbook = struct {
             _ = c.workbook_close(self.workbook);
             self.isOpen = false;
         }
+        // deinit the formats
+        for (self.formats.items) |format| {
+            format.deinit();
+        }
+        self.formats.deinit();
         self.allocator.destroy(self);
     }
 
@@ -57,7 +62,7 @@ pub const Workbook = struct {
             .format = c_format,
             .allocator = self.allocator,
         };
-
+        try self.formats.append(format);
         return format;
     }
 

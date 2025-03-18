@@ -16,6 +16,6 @@ pub fn main() !void {
     defer workbook.deinit();
 
     var worksheet = try workbook.addWorksheet(null);
-    try worksheet.writeString(0, 0, "Hello, Excel!", null);
+    try worksheet.writeString(0, 0, "Hello", null);
     try worksheet.writeNumber(1, 0, 123, null);
 }
