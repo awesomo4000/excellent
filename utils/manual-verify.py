@@ -63,12 +63,12 @@ def build_example(example_name):
 def get_c_excel_file(example_name):
     """Get the path to the C Excel file."""
     root_dir = Path(__file__).parent.parent
-    c_output_dir = root_dir / "testing" / "c-output-xls"
+    c_output_dir = root_dir / "testing" / "reference-xls"
     extension = ".xlsm" if example_name == "macro" else ".xlsx"
     c_excel_file = c_output_dir / f"{example_name}{extension}"
     
     if not c_excel_file.exists():
-        print(f"C Excel file not found: testing/c-output-xls/{example_name}{extension}")
+        print(f"C Excel file not found: testing/reference-xls/{example_name}{extension}")
         return None
     
     return c_excel_file
@@ -174,23 +174,34 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
         return False
     
     # Determine the Excel file path
-    excel_file = root_dir / f"{example_name}.xlsx"
+    excel_file = root_dir / f"generated_{example_name}.xlsx"
     
     if not excel_file.exists():
-        print(f"Excel file not found: {example_name}.xlsx")
+        print(f"Excel file not found: generated_{example_name}.xlsx")
         return False
     
-    # Give Excel time to open the file
-    print("Waiting for Excel to open file...")
+    # Wait for the file to be fully written
+    print("Waiting for Excel file to be fully generated...")
     time.sleep(2)
+    
+    # Get the reference Excel file path
+    ref_excel_file = get_c_excel_file(example_name)
+    if not ref_excel_file:
+        print("Warning: Reference Excel file not found")
+        return False
     
     # Position Excel windows using excel-position.sh
     print("Positioning Excel windows...")
+    print(f"Debug - Reference file path: {ref_excel_file}")
+    print(f"Debug - Generated file path: {excel_file}")
     try:
+        # Get the absolute path to the excel-position.sh script
+        excel_position_script = root_dir / "utils" / "excel-position.sh"
+        # Now position the windows using absolute paths
         subprocess.run([
-            "./utils/excel-position.sh",
-            str(excel_file),
-            str(root_dir / f"{example_name}.xlsx")  # Both files are in root directory
+            str(excel_position_script),
+            str(ref_excel_file),  # Reference file first
+            str(excel_file)       # Generated file second
         ], check=True)
         time.sleep(1)  # Give time for windows to position
     except subprocess.CalledProcessError as e:

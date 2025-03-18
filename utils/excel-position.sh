@@ -21,19 +21,10 @@ if [ ! -f "$GENERATED_FILE" ]; then
     exit 1
 fi
 
-# Get the directory and base name of the generated file
-GENERATED_DIR=$(dirname "$GENERATED_FILE")
-GENERATED_BASE=$(basename "$GENERATED_FILE")
-GENERATED_NAME="${GENERATED_BASE%.*}"
-GENERATED_EXT="${GENERATED_BASE##*.}"
-
-# Create a temporary copy of the generated file with a distinct name
-TEMP_FILE="${GENERATED_DIR}/generated_${GENERATED_NAME}.${GENERATED_EXT}"
-
-# If the temp file already exists, remove it
-if [ -f "$TEMP_FILE" ]; then
-    rm "$TEMP_FILE"
-fi
+# Create a temporary file with proper .xlsx extension
+TEMP_BASE=$(mktemp -t excel_XXXXXX)
+TEMP_FILE="${TEMP_BASE}.xlsx"
+mv "$TEMP_BASE" "$TEMP_FILE"
 
 # Copy the generated file to the temp location
 cp "$GENERATED_FILE" "$TEMP_FILE"
@@ -64,3 +55,6 @@ tell application "Microsoft Excel"
     set bounds of window 1 to {windowWidth + halfGap, 0, windowWidth * 2 + halfGap, windowHeight}
 end tell
 EOF
+
+# Clean up the temporary file
+rm "$TEMP_FILE"
