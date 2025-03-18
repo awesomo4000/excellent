@@ -54,9 +54,10 @@ def build_example(example_name):
     return True
 
 
-def run_example(example_name):
+def run_example(example_name, quiet=False):
     """Run the example to generate the Excel file"""
-    print(f"Running example to generate Excel file: {example_name}.xlsx")
+    if not quiet:
+        print(f"Running example to generate Excel file: {example_name}.xlsx")
     example_bin = PROJECT_ROOT / "zig-out" / "bin" / example_name
     
     if not example_bin.exists():
@@ -75,7 +76,8 @@ def run_example(example_name):
         print(f"❌ Excel file not generated: {generated_file}")
         return False
     
-    print(f"✅ Excel file generated: {generated_file}")
+    if not quiet:
+        print(f"✅ Excel file generated: {generated_file}")
     return True
 
 
@@ -90,15 +92,13 @@ def check_formulas(workbook, example_name):
             for col_idx, cell in enumerate(row, 1):
                 # Check for formula cells
                 if cell.value and isinstance(cell.value, str) and cell.value.startswith('='):
-                    print(f"Found formula at {sheet_name}!{cell.coordinate}: {cell.value}")
-                    
                     # Check for circular references
                     # This is a basic check - it only catches obvious self-references
                     cell_col_letter = openpyxl.utils.get_column_letter(col_idx)
                     cell_ref = f"{cell_col_letter}{row_idx}"
                     
                     if cell_ref in cell.value:
-                        print(f"⚠️ Potential circular reference: {cell.value} references its own cell {cell_ref}")
+                        print(f"⚠️ Potential circular reference in {sheet_name}!{cell.coordinate}: {cell.value} references its own cell {cell_ref}")
                         issues_found = True
                     
                     # Check for SUM ranges that might include the formula cell itself
@@ -109,17 +109,17 @@ def check_formulas(workbook, example_name):
                         
                         if (cell_col_letter >= start_col and cell_col_letter <= end_col and 
                             row_idx >= start_row and row_idx <= end_row):
-                            print(f"⚠️ Formula range includes its own cell: {cell.value}")
+                            print(f"⚠️ Formula range includes its own cell in {sheet_name}!{cell.coordinate}: {cell.value}")
                             issues_found = True
                     
                     # Check for null-termination issues (common in the Zig libxlsxwriter wrapper)
                     if cell.value.endswith('\x00'):
-                        print(f"⚠️ Formula contains null terminator at the end: {cell.value}")
+                        print(f"⚠️ Formula contains null terminator at the end in {sheet_name}!{cell.coordinate}: {cell.value}")
                         issues_found = True
                     
                     # Check for other common formula syntax issues
                     if ':' in cell.value and not re.search(r'[A-Z]+\d+:[A-Z]+\d+', cell.value):
-                        print(f"⚠️ Potentially malformed range in formula: {cell.value}")
+                        print(f"⚠️ Potentially malformed range in formula at {sheet_name}!{cell.coordinate}: {cell.value}")
                         issues_found = True
     
     return not issues_found
@@ -148,10 +148,11 @@ def check_string_null_termination(workbook):
     return not issues_found
 
 
-def compare_with_reference(example_name):
+def compare_with_reference(example_name, quiet=False):
     """Compare generated Excel file with reference file"""
     generated_file = Path(f"{example_name}.xlsx")
     reference_file = REFERENCE_DIR / f"{example_name}.xlsx"
+    results_dir = PROJECT_ROOT / "testing" / "results" / example_name
     
     if not reference_file.exists():
         print(f"⚠️ Reference file not found: {get_relative_path(reference_file)}")
@@ -165,6 +166,9 @@ def compare_with_reference(example_name):
         if gen_wb.sheetnames != ref_wb.sheetnames:
             print(f"⚠️ Sheet names differ: {gen_wb.sheetnames} vs {ref_wb.sheetnames}")
             return False
+        
+        style_differences = []
+        has_failures = False
         
         # Compare cell contents in each sheet
         for sheet_name in gen_wb.sheetnames:
@@ -183,10 +187,126 @@ def compare_with_reference(example_name):
                     if gen_cell.value != ref_cell.value:
                         print(f"⚠️ Cell value mismatch at {sheet_name}!{gen_cell.coordinate}: "
                               f"'{gen_cell.value}' vs '{ref_cell.value}'")
-                        return False
+                        has_failures = True
+                    
+                    # Compare cell styles if they exist
+                    if hasattr(gen_cell, '_style') and hasattr(ref_cell, '_style'):
+                        gen_style = gen_cell._style
+                        ref_style = ref_cell._style
+                        
+                        # Compare all style properties
+                        style_diff = []
+                        
+                        # Compare background color
+                        if hasattr(gen_style, 'fill') and hasattr(ref_style, 'fill'):
+                            gen_fill = gen_style.fill.start_color.rgb if gen_style.fill.start_color else None
+                            ref_fill = ref_style.fill.start_color.rgb if ref_style.fill.start_color else None
+                            if gen_fill != ref_fill:
+                                style_diff.append(f"background color: {gen_fill} vs {ref_fill}")
+                                has_failures = True
+                        
+                        # Compare font properties
+                        if hasattr(gen_style, 'font') and hasattr(ref_style, 'font'):
+                            font_props = [
+                                ('bold', 'bold'),
+                                ('italic', 'italic'),
+                                ('underline', 'underline'),
+                                ('strike', 'strike'),
+                                ('color', 'color.rgb'),
+                                ('size', 'size'),
+                                ('name', 'name'),
+                                ('vertAlign', 'vertAlign'),
+                                ('scheme', 'scheme')
+                            ]
+                            
+                            for prop, path in font_props:
+                                gen_val = getattr(gen_style.font, prop)
+                                ref_val = getattr(ref_style.font, prop)
+                                if gen_val != ref_val:
+                                    style_diff.append(f"font {prop}: {gen_val} vs {ref_val}")
+                                    has_failures = True
+                        
+                        # Compare borders
+                        if hasattr(gen_style, 'border') and hasattr(ref_style, 'border'):
+                            for side in ['top', 'bottom', 'left', 'right']:
+                                gen_border = getattr(gen_style.border, side)
+                                ref_border = getattr(ref_style.border, side)
+                                
+                                # Compare border style
+                                if gen_border.style != ref_border.style:
+                                    style_diff.append(f"{side} border style: {gen_border.style} vs {ref_border.style}")
+                                    has_failures = True
+                                
+                                # Compare border color
+                                gen_color = gen_border.color.rgb if gen_border.color else None
+                                ref_color = ref_border.color.rgb if ref_border.color else None
+                                if gen_color != ref_color:
+                                    style_diff.append(f"{side} border color: {gen_color} vs {ref_color}")
+                                    has_failures = True
+                        
+                        # Compare alignment
+                        if hasattr(gen_style, 'alignment') and hasattr(ref_style, 'alignment'):
+                            align_props = [
+                                ('horizontal', 'horizontal'),
+                                ('vertical', 'vertical'),
+                                ('textRotation', 'textRotation'),
+                                ('wrapText', 'wrapText'),
+                                ('shrinkToFit', 'shrinkToFit'),
+                                ('indent', 'indent'),
+                                ('relativeIndent', 'relativeIndent'),
+                                ('justifyLastLine', 'justifyLastLine')
+                            ]
+                            
+                            for prop, path in align_props:
+                                gen_val = getattr(gen_style.alignment, prop)
+                                ref_val = getattr(ref_style.alignment, prop)
+                                if gen_val != ref_val:
+                                    style_diff.append(f"alignment {prop}: {gen_val} vs {ref_val}")
+                                    has_failures = True
+                        
+                        # Compare number format
+                        if hasattr(gen_style, 'number_format') and hasattr(ref_style, 'number_format'):
+                            if gen_style.number_format != ref_style.number_format:
+                                style_diff.append(f"number format: {gen_style.number_format} vs {ref_style.number_format}")
+                                has_failures = True
+                        
+                        # If there are any style differences, add them to the list
+                        if style_diff:
+                            style_differences.append({
+                                'cell': f"{sheet_name}!{gen_cell.coordinate}",
+                                'differences': style_diff
+                            })
         
-        print("✅ Generated file matches reference file content")
-        return True
+        # Report any style differences found
+        if style_differences:
+            print("\n⚠️ Style differences found:")
+            for diff in style_differences:
+                print(f"\nCell: {diff['cell']}")
+                for d in diff['differences']:
+                    print(f"  - {d}")
+        
+        if not quiet:
+            if has_failures:
+                print("\n❌ Generated file has style differences from reference file")
+            else:
+                print("✅ Generated file matches reference file content and styles")
+        
+        # Create results directory if it doesn't exist
+        results_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create or remove excel_passing file based on results
+        excel_passing_file = results_dir / "excel_passing"
+        if not has_failures:
+            excel_passing_file.touch()
+            if not quiet:
+                print(f"✅ Created excel_passing file at {get_relative_path(excel_passing_file)}")
+        else:
+            if excel_passing_file.exists():
+                excel_passing_file.unlink()
+            if not quiet:
+                print(f"❌ Removed excel_passing file due to style differences")
+        
+        return not has_failures
         
     except InvalidFileException as e:
         print(f"❌ Error opening Excel file: {e}")
@@ -215,19 +335,18 @@ def check_xml_content(example_name):
                         
                         for formula in formulas:
                             formula_text = formula.text or ""
-                            print(f"Found formula in XML: {formula_text}")
                             
                             # Check if formula has proper XML escaping
                             if '<' in formula_text or '>' in formula_text or '&' in formula_text:
-                                print("⚠️ Formula contains XML special characters that may need escaping")
+                                print(f"⚠️ Formula contains XML special characters that may need escaping: {formula_text}")
                             
                             # Check if formula is truncated or malformed
                             if formula_text.startswith('=') and len(formula_text) < 3:
-                                print("⚠️ Formula seems truncated or malformed")
+                                print(f"⚠️ Formula seems truncated or malformed: {formula_text}")
                             
                             # Check for null characters in XML (which could indicate issues with Zig's string handling)
                             if '\x00' in formula_text:
-                                print("⚠️ Formula contains null characters which may cause issues")
+                                print(f"⚠️ Formula contains null characters which may cause issues: {formula_text}")
                         
                         # Check for other string content (similarly might have null termination issues)
                         cells = root.findall(".//s:c/s:v", ns)
@@ -281,6 +400,8 @@ def check_binary_compatibility(example_name):
         return False
     
     try:
+        has_differences = False
+        
         # Compare file sizes - significant differences might indicate issues
         gen_size = generated_file.stat().st_size
         ref_size = reference_file.stat().st_size
@@ -288,6 +409,7 @@ def check_binary_compatibility(example_name):
         
         if size_diff_percent > 10:  # More than 10% size difference
             print(f"⚠️ File size differs significantly: {gen_size} vs {ref_size} bytes ({size_diff_percent:.2f}% difference)")
+            has_differences = True
         
         # Check internal file structure using zipfile
         with zipfile.ZipFile(generated_file, 'r') as gen_zip, zipfile.ZipFile(reference_file, 'r') as ref_zip:
@@ -298,11 +420,13 @@ def check_binary_compatibility(example_name):
             missing_files = ref_files - gen_files
             if missing_files:
                 print(f"⚠️ Generated file is missing these internal files: {missing_files}")
+                has_differences = True
             
             # Check for extra files
             extra_files = gen_files - ref_files
             if extra_files:
                 print(f"⚠️ Generated file has these extra internal files: {extra_files}")
+                has_differences = True
             
             # Compare contents of important files
             for file_name in ['xl/workbook.xml', 'xl/styles.xml']:
@@ -313,23 +437,101 @@ def check_binary_compatibility(example_name):
                         
                         if gen_content != ref_content:
                             print(f"⚠️ Content of {file_name} differs")
+                            has_differences = True
+        
+        return not has_differences
     
     except Exception as e:
         print(f"❌ Error checking binary compatibility: {e}")
         return False
-    
-    return True
 
 
 def main():
     parser = argparse.ArgumentParser(description="Check Excel files for common issues before verification")
-    parser.add_argument("example", help="Name of the example to check (without .zig extension)")
+    parser.add_argument("example", nargs="?", help="Name of the example to check (without .zig extension)")
     parser.add_argument("--build", action="store_true", help="Build the example before checking")
     parser.add_argument("--run", action="store_true", help="Run the example to generate the Excel file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information about checks")
     parser.add_argument("--file-only", action="store_true", help="Skip example file check, just check the Excel file")
+    parser.add_argument("--all", action="store_true", help="Check all examples (except status)")
     
     args = parser.parse_args()
+    
+    if args.all:
+        if args.example:
+            print("Error: Cannot specify both --all and an example name")
+            return 1
+            
+        # Get all example files
+        example_files = list(EXAMPLES_DIR.glob("*.zig"))
+        failed_examples = []
+        
+        for example_file in example_files:
+            example_name = example_file.stem
+            if example_name == "status":  # Skip status binary
+                continue
+                
+            # Run the example
+            if not run_example(example_name, quiet=True):
+                failed_examples.append((example_name, "Failed to run example"))
+                continue
+                
+            # Check the Excel file
+            excel_file = Path(f"{example_name}.xlsx")
+            if not excel_file.exists():
+                failed_examples.append((example_name, "Excel file not generated"))
+                continue
+                
+            try:
+                # Load workbook for checks
+                workbook = openpyxl.load_workbook(excel_file)
+                
+                # Run checks
+                formula_check = check_formulas(workbook, example_name)
+                string_check = check_string_null_termination(workbook)
+                xml_check = check_xml_content(example_name)
+                binary_check = check_binary_compatibility(example_name)
+                content_check = compare_with_reference(example_name, quiet=True)
+                
+                if formula_check and string_check and xml_check and binary_check and content_check:
+                    print(f"✅ {example_name}")
+                else:
+                    failed_examples.append((example_name, "One or more checks failed"))
+                    # Re-run checks with verbose output to show details
+                    print(f"\nDetailed output for {example_name}:")
+                    try:
+                        workbook = openpyxl.load_workbook(Path(f"{example_name}.xlsx"))
+                        print("\nChecking formulas...")
+                        check_formulas(workbook, example_name)
+                        print("\nChecking string null-termination...")
+                        check_string_null_termination(workbook)
+                        print("\nChecking XML content...")
+                        check_xml_content(example_name)
+                        print("\nChecking binary compatibility...")
+                        check_binary_compatibility(example_name)
+                        print("\nComparing with reference file...")
+                        compare_with_reference(example_name)
+                    except Exception as e:
+                        print(f"Error during detailed check: {e}")
+                    
+            except Exception as e:
+                failed_examples.append((example_name, f"Error checking Excel file: {e}"))
+        
+        # Print detailed failure information if any
+        if failed_examples:
+            print("\n=== Failed Examples ===")
+            for example_name, error in failed_examples:
+                print(f"\n❌ {example_name}: {error}")
+            
+            return 1
+        else:
+            print("\n✅ All examples passed!")
+            return 0
+        
+    if not args.example:
+        print("Error: Must specify either an example name or --all")
+        return 1
+        
     example_name = args.example
     
     # Check if example exists, unless in file-only mode
