@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @import("xlsxwriter");
 const format_mod = @import("format.zig");
 const cell_utils = @import("cell_utils.zig");
+const styled = @import("styled.zig");
 
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
@@ -247,5 +248,40 @@ pub const Worksheet = struct {
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);
         try self.writeDateTime(pos.row, pos.col, datetime, format);
+    }
+
+    /// Creates a StyledWriter starting at the specified position
+    pub fn writer(self: *Worksheet, start_row: usize, start_col: usize, format: ?*format_mod.Format) styled.StyledWriter {
+        return styled.StyledWriter.init(self, start_row, start_col, format);
+    }
+
+    /// Write a rich string to a cell, optionally with formatting
+    pub fn writeRichString(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        fragments: [*c][*c]c.lxw_rich_string_tuple,
+        format: ?*format_mod.Format,
+    ) !void {
+        const format_ptr = if (format) |f| f.format else null;
+        const result = c.worksheet_write_rich_string(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            fragments,
+            format_ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.WriteFailed;
+    }
+
+    /// Write a rich string to a cell using a cell reference (e.g., "A1", "B2")
+    pub fn writeRichStringCell(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        fragments: [*c][*c]c.lxw_rich_string_tuple,
+        format: ?*format_mod.Format,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        try self.writeRichString(pos.row, pos.col, fragments, format);
     }
 };

@@ -21,20 +21,28 @@ pub const Alignment = enum(u8) {
 
 /// Border styles for cells
 pub const BorderStyle = enum(u8) {
-    None = 0,
-    Thin = 1,
-    Medium = 2,
-    Dashed = 3,
-    Dotted = 4,
-    Thick = 5,
-    Double = 6,
-    Hair = 7,
-    MediumDashed = 8,
-    DashDot = 9,
-    MediumDashDot = 10,
-    DashDotDot = 11,
-    MediumDashDotDot = 12,
-    SlantDashDot = 13,
+    none = 0,
+    thin = 1,
+    medium = 2,
+    dashed = 3,
+    dotted = 4,
+    thick = 5,
+    double = 6,
+    hair = 7,
+    medium_dashed = 8,
+    dash_dot = 9,
+    medium_dash_dot = 10,
+    dash_dot_dot = 11,
+    medium_dash_dot_dot = 12,
+    slant_dash_dot = 13,
+};
+
+/// Diagonal border types
+pub const DiagonalType = enum(u8) {
+    none = 0,
+    up = 1,
+    down = 2,
+    up_down = 3,
 };
 
 /// Represents a cell format with a fluent builder API.
@@ -90,9 +98,9 @@ pub const Format = struct {
         return self;
     }
 
-    /// Set cell border
-    pub fn setBorder(self: *Format, border_style: BorderStyle) *Format {
-        _ = c.format_set_border(self.format, @intFromEnum(border_style));
+    /// Set cell pattern
+    pub fn setPattern(self: *Format, pattern: u8) *Format {
+        _ = c.format_set_pattern(self.format, pattern);
         return self;
     }
 
@@ -105,6 +113,12 @@ pub const Format = struct {
     /// Set font color
     pub fn setFontColor(self: *Format, color: u32) *Format {
         _ = c.format_set_font_color(self.format, color);
+        return self;
+    }
+
+    /// Set cell border
+    pub fn setBorder(self: *Format, border_style: BorderStyle) *Format {
+        _ = c.format_set_border(self.format, @intFromEnum(border_style));
         return self;
     }
 
@@ -136,6 +150,24 @@ pub const Format = struct {
 
     pub fn setRightBorder(self: *Format, border_style: BorderStyle) *Format {
         _ = c.format_set_right(self.format, @intFromEnum(border_style));
+        return self;
+    }
+
+    /// Set diagonal border type
+    pub fn setDiagonalType(self: *Format, diag_type: DiagonalType) *Format {
+        _ = c.format_set_diag_type(self.format, @intFromEnum(diag_type));
+        return self;
+    }
+
+    /// Set diagonal border style
+    pub fn setDiagonalBorder(self: *Format, border_style: BorderStyle) *Format {
+        _ = c.format_set_diag_border(self.format, @intFromEnum(border_style));
+        return self;
+    }
+
+    /// Set diagonal border color
+    pub fn setDiagonalColor(self: *Format, color: u32) *Format {
+        _ = c.format_set_diag_color(self.format, color);
         return self;
     }
 };

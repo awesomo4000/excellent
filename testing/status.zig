@@ -11,6 +11,7 @@ const Example = struct {
     name: []const u8,
     implemented: bool,
     verified: bool,
+    excel_passing: bool,
 };
 
 const OutputFormat = enum {
@@ -79,10 +80,20 @@ fn setupExamples(
                 defer allocator.free(result_path);
                 break :blk fs.cwd().access(result_path, .{}) != error.FileNotFound;
             };
+            const excel_passing = blk: {
+                const excel_path = try std.fmt.allocPrint(
+                    allocator,
+                    "testing/results/{s}/excel_passing",
+                    .{name},
+                );
+                defer allocator.free(excel_path);
+                break :blk fs.cwd().access(excel_path, .{}) != error.FileNotFound;
+            };
             try examples.append(.{
                 .name = name,
                 .implemented = implemented,
                 .verified = verified,
+                .excel_passing = excel_passing,
             });
         }
     }
@@ -135,6 +146,8 @@ pub fn main() !void {
             defer impl_names.deinit();
             var verified_names = std.ArrayList([]const u8).init(allocator);
             defer verified_names.deinit();
+            var excel_passing_names = std.ArrayList([]const u8).init(allocator);
+            defer excel_passing_names.deinit();
 
             for (examples.items) |example| {
                 if (!example.implemented) {
@@ -143,6 +156,9 @@ pub fn main() !void {
                     try impl_names.append(example.name);
                     if (example.verified) {
                         try verified_names.append(example.name);
+                    }
+                    if (example.excel_passing) {
+                        try excel_passing_names.append(example.name);
                     }
                 }
             }
@@ -159,11 +175,20 @@ pub fn main() !void {
             try printWrappedNames(
                 stdoutWriter,
                 impl_names.items,
-                "Implemented: ",
+                "Started: ",
             );
             try stdoutWriter.print(
                 "({d}/{d})\n\n",
                 .{ impl_names.items.len, examples.items.len },
+            );
+            try printWrappedNames(
+                stdoutWriter,
+                excel_passing_names.items,
+                "AutoChecked: ",
+            );
+            try stdoutWriter.print(
+                "({d}/{d})\n\n",
+                .{ excel_passing_names.items.len, examples.items.len },
             );
             try printWrappedNames(
                 stdoutWriter,
@@ -185,11 +210,12 @@ pub fn main() !void {
         for (examples.items) |example| {
             if (std.mem.eql(u8, example.name, name)) {
                 try stdoutWriter.print(
-                    "{s: >30}  impl={s}  verified={s}\n",
+                    "{s: >30}  impl={s}  verified={s}  excel={s}\n",
                     .{
                         example.name,
                         if (example.implemented) "✓" else "✗",
                         if (example.verified) "✓" else "✗",
+                        if (example.excel_passing) "✓" else "✗",
                     },
                 );
                 return;
@@ -209,24 +235,31 @@ pub fn main() !void {
     // Show all examples
     var implemented: usize = 0;
     var verified: usize = 0;
+    var excel_passing: usize = 0;
     for (examples.items) |example| {
         if (example.implemented) implemented += 1;
         if (example.verified) verified += 1;
+        if (example.excel_passing) excel_passing += 1;
         try stdoutWriter.print(
-            "{s: >30}  impl={s}  verified={s}\n",
+            "{s: >30}  impl={s}  verified={s}  excel={s}\n",
             .{
                 example.name,
                 if (example.implemented) "✓" else "✗",
                 if (example.verified) "✓" else "✗",
+                if (example.excel_passing) "✓" else "✗",
             },
         );
     }
     try stdoutWriter.print(
-        "\nProgress: {d}/{d} examples implemented ({d:.1}%), {d}/{d} verified ({d:.1}%)\n",
+        "\nProgress: {d}/{d} examples started ({d:.1}%), {d}/{d} autochecked ({d:.1}%), {d}/{d} verified ({d:.1}%)\n",
         .{
             implemented,
             examples.items.len,
             @as(f64, @floatFromInt(implemented)) /
+                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            excel_passing,
+            examples.items.len,
+            @as(f64, @floatFromInt(excel_passing)) /
                 @as(f64, @floatFromInt(examples.items.len)) * 100.0,
             verified,
             examples.items.len,

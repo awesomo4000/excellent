@@ -25,17 +25,15 @@ pub fn main() !void {
 
     // Add a bold format to use to highlight cells.
     var bold = try workbook.addFormat();
-    defer bold.deinit();
+
     _ = bold.setBold();
 
     // Add a number format for cells with money.
     var money = try workbook.addFormat();
-    defer money.deinit();
     _ = try money.setNumFormat("$#,##0");
 
     // Add an Excel date format.
     var date_format = try workbook.addFormat();
-    defer date_format.deinit();
     _ = try date_format.setNumFormat("mmmm d yyyy");
 
     // Adjust the column width.

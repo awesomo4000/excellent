@@ -110,6 +110,7 @@ pub fn build(b: *std.Build) void {
         const run_example = b.addRunArtifact(example_exe);
         b.installArtifact(example_exe);
         examples_step.dependOn(&example_exe.step);
+        examples_step.dependOn(b.getInstallStep());
         run_step.dependOn(&run_example.step);
     } else {
         // Otherwise build all examples

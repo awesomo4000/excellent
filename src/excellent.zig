@@ -8,6 +8,8 @@ pub const Alignment = @import("format.zig").Alignment;
 pub const BorderStyle = @import("format.zig").BorderStyle;
 pub const Workbook = @import("workbook.zig").Workbook;
 pub const Worksheet = @import("worksheet.zig").Worksheet;
+pub const StyledText = @import("styled.zig").StyledText;
+pub const StyledWriter = @import("styled.zig").StyledWriter;
 
 /// Excel DateTime representation
 pub const DateTime = struct {

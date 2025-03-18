@@ -30,12 +30,11 @@ pub fn main() !void {
 
     // Add a bold format to use to highlight cells
     var bold = try workbook.addFormat();
-    defer bold.deinit();
+
     _ = bold.setBold();
 
     // Add a number format for cells with money
     var money = try workbook.addFormat();
-    defer money.deinit();
     _ = try money.setNumFormat("$#,##0");
 
     // Write the header row
