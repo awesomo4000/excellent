@@ -107,8 +107,10 @@ pub fn build(b: *std.Build) void {
             .root_module = example_mod,
         });
 
+        const run_example = b.addRunArtifact(example_exe);
         b.installArtifact(example_exe);
         examples_step.dependOn(&example_exe.step);
+        run_step.dependOn(&run_example.step);
     } else {
         // Otherwise build all examples
         var dir = std.fs.cwd().openDir(examples_dir, .{ .iterate = true }) catch unreachable;
@@ -134,6 +136,7 @@ pub fn build(b: *std.Build) void {
 
             b.installArtifact(example_exe);
             examples_step.dependOn(&example_exe.step);
+            examples_step.dependOn(b.getInstallStep());
         }
     }
 }
