@@ -1,49 +1,47 @@
 const std = @import("std");
-const xlsxwriter = @import("xlsxwriter");
 
-pub const Workbook = struct {
-    allocator: std.mem.Allocator,
-    filename: []const u8,
-    workbook: *xlsxwriter.lxw_workbook,
+// Re-export all module components
+pub const cell = @import("cell_utils.zig").cell;
+pub const XlsxError = @import("error_utils.zig").XlsxError;
+pub const Format = @import("format.zig").Format;
+pub const Alignment = @import("format.zig").Alignment;
+pub const BorderStyle = @import("format.zig").BorderStyle;
+pub const Workbook = @import("workbook.zig").Workbook;
+pub const Worksheet = @import("worksheet.zig").Worksheet;
 
-    pub fn init(filename: []const u8) !Workbook {
-        const workbook = xlsxwriter.workbook_new(filename.ptr);
-        if (workbook == null) return error.WorkbookCreationFailed;
+/// Excel DateTime representation
+pub const DateTime = struct {
+    year: u16 = 0,
+    month: u8 = 0,
+    day: u8 = 0,
+    hour: u8 = 0,
+    min: u8 = 0,
+    sec: f64 = 0,
 
-        return Workbook{
-            .allocator = std.heap.page_allocator,
-            .filename = filename,
-            .workbook = workbook,
-        };
-    }
-
-    pub fn deinit(self: *Workbook) void {
-        _ = xlsxwriter.workbook_close(self.workbook);
-    }
-
-    pub fn addWorksheet(self: *Workbook, name: ?[]const u8) !Worksheet {
-        const name_ptr = if (name) |n| n.ptr else null;
-        const worksheet = xlsxwriter.workbook_add_worksheet(self.workbook, name_ptr);
-        if (worksheet == null) return error.WorksheetCreationFailed;
-
-        return Worksheet{
-            .workbook = self,
-            .worksheet = worksheet,
+    /// Convert to lxw_datetime for internal use
+    pub fn toLxwDateTime(self: DateTime) @import("xlsxwriter").lxw_datetime {
+        return @import("xlsxwriter").lxw_datetime{
+            .year = self.year,
+            .month = self.month,
+            .day = self.day,
+            .hour = self.hour,
+            .min = self.min,
+            .sec = self.sec,
         };
     }
 };
 
-pub const Worksheet = struct {
-    workbook: *Workbook,
-    worksheet: *xlsxwriter.lxw_worksheet,
-
-    pub fn writeString(self: *Worksheet, row: usize, col: usize, text: []const u8) !void {
-        const result = xlsxwriter.worksheet_write_string(self.worksheet, @intCast(row), @intCast(col), text.ptr, null);
-        if (result != xlsxwriter.LXW_NO_ERROR) return error.WriteFailed;
-    }
-
-    pub fn writeNumber(self: *Worksheet, row: usize, col: usize, number: f64) !void {
-        const result = xlsxwriter.worksheet_write_number(self.worksheet, @intCast(row), @intCast(col), number, null);
-        if (result != xlsxwriter.LXW_NO_ERROR) return error.WriteFailed;
-    }
-};
+// Helper function to convert a double timestamp to lxw_datetime
+// Place in appropriate module later if functionality expands
+pub fn dateTimeToLxwDateTime(_: f64) @import("xlsxwriter").lxw_datetime {
+    // This is a simplified implementation
+    // In a real application, you would convert from a standard datetime format
+    return @import("xlsxwriter").lxw_datetime{
+        .year = 2023,
+        .month = 1,
+        .day = 1,
+        .hour = 0,
+        .min = 0,
+        .sec = 0,
+    };
+}

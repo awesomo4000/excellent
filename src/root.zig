@@ -4,6 +4,9 @@
 const std = @import("std");
 const testing = std.testing;
 
+// Just re-export the entire excellent library through the root module
+pub usingnamespace @import("excellent.zig");
+
 pub export fn add(a: i32, b: i32) i32 {
     return a + b;
 }

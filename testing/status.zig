@@ -49,7 +49,6 @@ fn setupExamples(
 ) !std.ArrayList(Example) {
     const examples_dir = "testing/zig-c-binding-examples";
     const examples_out_dir = "examples";
-    const reference_dir = "testing/reference-xls";
 
     var examples = std.ArrayList(Example).init(allocator);
 
@@ -72,22 +71,13 @@ fn setupExamples(
                 break :blk fs.cwd().access(out_path, .{}) != error.FileNotFound;
             };
             const verified = blk: {
-                const ref_path = try std.fmt.allocPrint(
+                const result_path = try std.fmt.allocPrint(
                     allocator,
-                    "{s}/{s}.xlsx",
-                    .{ reference_dir, name },
-                );
-                defer allocator.free(ref_path);
-                const out_path = try std.fmt.allocPrint(
-                    allocator,
-                    "testing/test-output-xls/{s}.xlsx",
+                    "testing/results/{s}/verified",
                     .{name},
                 );
-                defer allocator.free(out_path);
-                break :blk fs.cwd().access(ref_path, .{}) !=
-                    error.FileNotFound and
-                    fs.cwd().access(out_path, .{}) !=
-                        error.FileNotFound;
+                defer allocator.free(result_path);
+                break :blk fs.cwd().access(result_path, .{}) != error.FileNotFound;
             };
             try examples.append(.{
                 .name = name,
