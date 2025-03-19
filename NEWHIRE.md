@@ -143,6 +143,10 @@ The manual verification process helps ensure that the generated Excel files matc
 
 When implementing examples, you might encounter issues where your output file doesn't match the reference. Here are some common problems and solutions:
 
+### Zig Language Issues
+
+- **Deprecated std.mem.split**: As of Zig 0.14.0, `std.mem.split` is deprecated. Use `std.mem.splitScalar`, `std.mem.splitAny`, or `std.mem.splitSequence` instead, depending on your use case. Most string splitting with a single character delimiter should use `std.mem.splitScalar`.
+
 ### Excel Formula Issues
 
 - **Warning Indicators**: If Excel shows warning indicators in formula cells in your output but not in the reference file, check:

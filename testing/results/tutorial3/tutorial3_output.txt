@@ -1,0 +1,5 @@
+Verification of tutorial3 example:
+Excel file: testing/results/tutorial3/tutorial3.xlsx
+Screenshot: testing/results/tutorial3/comparison_tutorial3.png
+
+RESULT: VERIFIED - User confirmed output looks correct

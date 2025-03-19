@@ -1,0 +1,5 @@
+Verification of format_font example:
+Excel file: testing/results/format_font/format_font.xlsx
+Screenshot: testing/results/format_font/comparison_format_font.png
+
+RESULT: VERIFIED - User confirmed output looks correct

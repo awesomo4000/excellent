@@ -1,0 +1,5 @@
+Verification of hello example:
+Excel file: testing/results/hello/hello.xlsx
+Screenshot: testing/results/hello/comparison_hello.png
+
+RESULT: VERIFIED - User confirmed output looks correct

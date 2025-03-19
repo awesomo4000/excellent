@@ -1,0 +1,5 @@
+Verification of styled_text example:
+Excel file: testing/results/styled_text/styled_text.xlsx
+Screenshot: testing/results/styled_text/comparison_styled_text.png
+
+RESULT: FAILED - User reported issues with output

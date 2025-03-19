@@ -202,7 +202,7 @@ pub const Worksheet = struct {
         format: ?*format_mod.Format,
     ) !void {
         // Split the range into start and end cells
-        var iter = std.mem.split(u8, range, ":");
+        var iter = std.mem.splitScalar(u8, range, ':');
         const start = iter.next() orelse return error.InvalidRange;
         const end = iter.next() orelse return error.InvalidRange;
 
@@ -283,5 +283,59 @@ pub const Worksheet = struct {
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);
         try self.writeRichString(pos.row, pos.col, fragments, format);
+    }
+
+    /// Write an array formula to a range of cells
+    pub fn writeArrayFormula(
+        self: *Worksheet,
+        first_row: usize,
+        first_col: usize,
+        last_row: usize,
+        last_col: usize,
+        formula: []const u8,
+        format: ?*format_mod.Format,
+    ) !void {
+        const format_ptr = if (format) |f| f.format else null;
+
+        // Ensure formula is null-terminated
+        const null_term_formula = try self.workbook.allocator.dupeZ(u8, formula);
+        defer self.workbook.allocator.free(null_term_formula);
+
+        const result = c.worksheet_write_array_formula(
+            self.worksheet,
+            @intCast(first_row),
+            @intCast(first_col),
+            @intCast(last_row),
+            @intCast(last_col),
+            null_term_formula.ptr,
+            format_ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.WriteFailed;
+    }
+
+    /// Write an array formula to a range of cells using a cell range string (e.g., "A1:B2")
+    pub fn writeArrayFormulaRange(
+        self: *Worksheet,
+        range: []const u8,
+        formula: []const u8,
+        format: ?*format_mod.Format,
+    ) !void {
+        // Split the range into start and end cells
+        var iter = std.mem.splitScalar(u8, range, ':');
+        const start = iter.next() orelse return error.InvalidRange;
+        const end = iter.next() orelse return error.InvalidRange;
+
+        // Parse start and end cells
+        const start_pos = try cell_utils.cell.strToRowCol(start);
+        const end_pos = try cell_utils.cell.strToRowCol(end);
+
+        try self.writeArrayFormula(
+            start_pos.row,
+            start_pos.col,
+            end_pos.row,
+            end_pos.col,
+            formula,
+            format,
+        );
     }
 };

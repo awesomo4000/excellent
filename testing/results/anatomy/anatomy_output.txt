@@ -1,0 +1,5 @@
+Verification of anatomy example:
+Excel file: testing/results/anatomy/anatomy.xlsx
+Screenshot: testing/results/anatomy/comparison_anatomy.png
+
+RESULT: VERIFIED - User confirmed output looks correct

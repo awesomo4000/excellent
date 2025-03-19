@@ -1,0 +1,5 @@
+Verification of array_formula example:
+Excel file: testing/results/array_formula/array_formula.xlsx
+Screenshot: testing/results/array_formula/comparison_array_formula.png
+
+RESULT: VERIFIED - User confirmed output looks correct
