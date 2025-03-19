@@ -6,3 +6,6 @@ utils/excel-view
 .cursorignore
 __pycache__/
 x/
+coverage/
+kcov-output/
+.DS_Store
