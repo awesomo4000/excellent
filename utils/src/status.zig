@@ -12,6 +12,7 @@ const Example = struct {
     implemented: bool,
     verified: bool,
     excel_passing: bool,
+    have_ref_xlsx: bool,
 };
 
 const OutputFormat = enum {
@@ -24,16 +25,46 @@ fn printWrappedNames(
     names: []const []const u8,
     prefix: []const u8,
 ) !void {
-    var line_len: usize = prefix.len;
+    const labels = [_][]const u8{
+        "haveRefXlsx: ",
+        "haveZig: ",
+        "autoChecked: ",
+        "verified: ",
+    };
+
+    // Find the longest label and colon position
+    var max_label_len: usize = 0;
+    var max_colon_pos: usize = 0;
+    for (labels) |label| {
+        max_label_len = @max(max_label_len, label.len);
+        const colon_pos = std.mem.indexOfScalar(u8, label, ':') orelse label.len;
+        max_colon_pos = @max(max_colon_pos, colon_pos);
+    }
+
+    // Calculate prefix padding to right-align the colon
+    const colon_pos = std.mem.indexOfScalar(u8, prefix, ':') orelse prefix.len;
+    const prefix_padding = max_colon_pos - colon_pos;
+
+    // Calculate total prefix length with padding
+    const padded_prefix_len = prefix.len + prefix_padding;
+
+    // Print prefix padding first
+    for (0..prefix_padding) |_| {
+        try writer.print(" ", .{});
+    }
+
+    // Print the prefix
     try writer.print("{s}", .{prefix});
 
+    var line_len: usize = padded_prefix_len;
+
     for (names, 0..) |name, i| {
-        if (line_len + name.len > 60) {
+        if (line_len + name.len > 70) {
             try writer.print("\n", .{});
-            for (0..prefix.len) |_| {
+            for (0..max_label_len) |_| {
                 try writer.print(" ", .{});
             }
-            line_len = prefix.len;
+            line_len = max_label_len;
         }
         try writer.print("{s}", .{name});
         if (i < names.len - 1) {
@@ -89,11 +120,21 @@ fn setupExamples(
                 defer allocator.free(excel_path);
                 break :blk fs.cwd().access(excel_path, .{}) != error.FileNotFound;
             };
+            const have_ref_xlsx = blk: {
+                const ref_path = try std.fmt.allocPrint(
+                    allocator,
+                    "testing/reference-xls/{s}.xlsx",
+                    .{name},
+                );
+                defer allocator.free(ref_path);
+                break :blk fs.cwd().access(ref_path, .{}) != error.FileNotFound;
+            };
             try examples.append(.{
                 .name = name,
                 .implemented = implemented,
                 .verified = verified,
                 .excel_passing = excel_passing,
+                .have_ref_xlsx = have_ref_xlsx,
             });
         }
     }
@@ -119,6 +160,73 @@ fn findMaxNameLength(
     return max_len;
 }
 
+fn printShortOutput(
+    writer: anytype,
+    examples: std.ArrayList(Example),
+    allocator: std.mem.Allocator,
+) !void {
+    var impl_names = std.ArrayList([]const u8).init(allocator);
+    defer impl_names.deinit();
+    var verified_names = std.ArrayList([]const u8).init(allocator);
+    defer verified_names.deinit();
+    var excel_passing_names = std.ArrayList([]const u8).init(allocator);
+    defer excel_passing_names.deinit();
+    var have_ref_xlsx_names = std.ArrayList([]const u8).init(allocator);
+    defer have_ref_xlsx_names.deinit();
+
+    for (examples.items) |example| {
+        if (example.implemented) {
+            try impl_names.append(example.name);
+            if (example.verified) {
+                try verified_names.append(example.name);
+            }
+            if (example.excel_passing) {
+                try excel_passing_names.append(example.name);
+            }
+        }
+        if (example.have_ref_xlsx) {
+            try have_ref_xlsx_names.append(example.name);
+        }
+    }
+
+    try printWrappedNames(
+        writer,
+        have_ref_xlsx_names.items,
+        "haveRefXlsx: ",
+    );
+    try writer.print(
+        "({d}/{d})\n\n",
+        .{ have_ref_xlsx_names.items.len, examples.items.len },
+    );
+    try printWrappedNames(
+        writer,
+        impl_names.items,
+        "haveZig: ",
+    );
+    try writer.print(
+        "({d}/{d})\n\n",
+        .{ impl_names.items.len, examples.items.len },
+    );
+    try printWrappedNames(
+        writer,
+        excel_passing_names.items,
+        "autoChecked: ",
+    );
+    try writer.print(
+        "({d}/{d})\n\n",
+        .{ excel_passing_names.items.len, examples.items.len },
+    );
+    try printWrappedNames(
+        writer,
+        verified_names.items,
+        "verified: ",
+    );
+    try writer.print(
+        "({d}/{d})\n",
+        .{ verified_names.items.len, examples.items.len },
+    );
+}
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -140,65 +248,7 @@ pub fn main() !void {
     // If specific example requested, show only that
     if (example_arg) |arg| {
         if (std.mem.eql(u8, arg, "--short")) {
-            var unstarted_names = std.ArrayList([]const u8).init(allocator);
-            defer unstarted_names.deinit();
-            var impl_names = std.ArrayList([]const u8).init(allocator);
-            defer impl_names.deinit();
-            var verified_names = std.ArrayList([]const u8).init(allocator);
-            defer verified_names.deinit();
-            var excel_passing_names = std.ArrayList([]const u8).init(allocator);
-            defer excel_passing_names.deinit();
-
-            for (examples.items) |example| {
-                if (!example.implemented) {
-                    try unstarted_names.append(example.name);
-                } else {
-                    try impl_names.append(example.name);
-                    if (example.verified) {
-                        try verified_names.append(example.name);
-                    }
-                    if (example.excel_passing) {
-                        try excel_passing_names.append(example.name);
-                    }
-                }
-            }
-
-            try printWrappedNames(
-                stdoutWriter,
-                unstarted_names.items,
-                "Unstarted: ",
-            );
-            try stdoutWriter.print(
-                "({d}/{d})\n\n",
-                .{ unstarted_names.items.len, examples.items.len },
-            );
-            try printWrappedNames(
-                stdoutWriter,
-                impl_names.items,
-                "Started: ",
-            );
-            try stdoutWriter.print(
-                "({d}/{d})\n\n",
-                .{ impl_names.items.len, examples.items.len },
-            );
-            try printWrappedNames(
-                stdoutWriter,
-                excel_passing_names.items,
-                "AutoChecked: ",
-            );
-            try stdoutWriter.print(
-                "({d}/{d})\n\n",
-                .{ excel_passing_names.items.len, examples.items.len },
-            );
-            try printWrappedNames(
-                stdoutWriter,
-                verified_names.items,
-                "Verified: ",
-            );
-            try stdoutWriter.print(
-                "({d}/{d})\n",
-                .{ verified_names.items.len, examples.items.len },
-            );
+            try printShortOutput(stdoutWriter, examples, allocator);
             return;
         }
 
@@ -210,12 +260,13 @@ pub fn main() !void {
         for (examples.items) |example| {
             if (std.mem.eql(u8, example.name, name)) {
                 try stdoutWriter.print(
-                    "{s: >30}  impl={s}  verified={s}  excel={s}\n",
+                    "{s: >30}  {s}  {s}  {s}  {s}\n",
                     .{
                         example.name,
-                        if (example.implemented) "✓" else "✗",
-                        if (example.verified) "✓" else "✗",
-                        if (example.excel_passing) "✓" else "✗",
+                        if (example.implemented) "[.zig]" else "",
+                        if (example.excel_passing) "[autochecked]" else "",
+                        if (example.verified) "[verified]" else "",
+                        if (example.have_ref_xlsx) "[ref]" else "",
                     },
                 );
                 return;
@@ -236,22 +287,25 @@ pub fn main() !void {
     var implemented: usize = 0;
     var verified: usize = 0;
     var excel_passing: usize = 0;
+    var have_ref_xlsx: usize = 0;
     for (examples.items) |example| {
         if (example.implemented) implemented += 1;
         if (example.verified) verified += 1;
         if (example.excel_passing) excel_passing += 1;
+        if (example.have_ref_xlsx) have_ref_xlsx += 1;
         try stdoutWriter.print(
-            "{s: >30}  impl={s}  verified={s}  excel={s}\n",
+            "{s: >30}  {s}  {s}  {s}  {s}\n",
             .{
                 example.name,
-                if (example.implemented) "✓" else "✗",
-                if (example.verified) "✓" else "✗",
-                if (example.excel_passing) "✓" else "✗",
+                if (example.implemented) "zig" else "",
+                if (example.verified) "verf" else "",
+                if (example.excel_passing) "autochecked" else "",
+                if (example.have_ref_xlsx) "ref" else "",
             },
         );
     }
     try stdoutWriter.print(
-        "\nProgress: {d}/{d} examples started ({d:.1}%), {d}/{d} autochecked ({d:.1}%), {d}/{d} verified ({d:.1}%)\n",
+        "\nProgress: {d}/{d} examples started ({d:.1}%), {d}/{d} autochecked ({d:.1}%), {d}/{d} verified ({d:.1}%), {d}/{d} have ref ({d:.1}%)\n",
         .{
             implemented,
             examples.items.len,
@@ -264,6 +318,10 @@ pub fn main() !void {
             verified,
             examples.items.len,
             @as(f64, @floatFromInt(verified)) /
+                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            have_ref_xlsx,
+            examples.items.len,
+            @as(f64, @floatFromInt(have_ref_xlsx)) /
                 @as(f64, @floatFromInt(examples.items.len)) * 100.0,
         },
     );

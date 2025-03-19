@@ -20,20 +20,32 @@ pub fn main() !void {
 
     // Get the two required arguments
     const reference_file = args.next() orelse {
-        std.debug.print("Usage: {s} <reference_excel_file> <generated_excel_file>\n", .{program_name});
+        std.debug.print(
+            "Usage: {s} <reference_excel_file> <generated_excel_file>\n",
+            .{program_name},
+        );
         process.exit(1);
     };
 
     const generated_file = args.next() orelse {
-        std.debug.print("Usage: {s} <reference_excel_file> <generated_excel_file>\n", .{program_name});
+        std.debug.print(
+            "Usage: {s} <reference_excel_file> <generated_excel_file>\n",
+            .{program_name},
+        );
         process.exit(1);
     };
 
     // Verify files exist
-    const reference_path = try fs.realpathAlloc(allocator, reference_file);
+    const reference_path = try fs.realpathAlloc(
+        allocator,
+        reference_file,
+    );
     defer allocator.free(reference_path);
 
-    const generated_path = try fs.realpathAlloc(allocator, generated_file);
+    const generated_path = try fs.realpathAlloc(
+        allocator,
+        generated_file,
+    );
     defer allocator.free(generated_path);
 
     // Check if files exist
@@ -46,21 +58,37 @@ pub fn main() !void {
 
     // Create a unique temporary file name using timestamp
     const timestamp = std.time.timestamp();
-    const temp_name = try std.fmt.allocPrint(allocator, "excel_{d}.xlsx", .{timestamp});
+    const temp_name = try std.fmt.allocPrint(
+        allocator,
+        "excel_{d}.xlsx",
+        .{timestamp},
+    );
     defer allocator.free(temp_name);
 
-    const temp_path = try std.fmt.allocPrint(allocator, "/tmp/{s}", .{temp_name});
+    const temp_path = try std.fmt.allocPrint(
+        allocator,
+        "/tmp/{s}",
+        .{temp_name},
+    );
     defer allocator.free(temp_path);
 
     // Create the temporary file
-    const temp_file = try fs.createFileAbsolute(temp_path, .{});
+    const temp_file = try fs.createFileAbsolute(
+        temp_path,
+        .{},
+    );
     temp_file.close();
 
     // Copy generated file to temp location
-    try fs.copyFileAbsolute(generated_path, temp_path, .{});
+    try fs.copyFileAbsolute(
+        generated_path,
+        temp_path,
+        .{},
+    );
 
     // Create AppleScript command
-    const apple_script = try std.fmt.allocPrint(allocator,
+    const apple_script = try std.fmt.allocPrint(
+        allocator,
         \\set displaySize to do shell script "system_profiler SPDisplaysDataType | grep Resolution | head -1"
         \\set screenWidth to word 2 of displaySize
         \\set screenHeight to word 4 of displaySize
@@ -75,11 +103,16 @@ pub fn main() !void {
         \\    open POSIX file "{s}"
         \\    set bounds of window 1 to {{windowWidth + halfGap, 0, windowWidth * 2 + halfGap, windowHeight}}
         \\end tell
-    , .{ reference_path, temp_path });
+    ,
+        .{ reference_path, temp_path },
+    );
     defer allocator.free(apple_script);
 
     // Execute AppleScript
-    var child = std.process.Child.init(&[_][]const u8{ "osascript", "-e", apple_script }, allocator);
+    var child = std.process.Child.init(
+        &[_][]const u8{ "osascript", "-e", apple_script },
+        allocator,
+    );
     child.stdin_behavior = .Ignore;
     child.stdout_behavior = .Ignore;
     child.stderr_behavior = .Ignore;

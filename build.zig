@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
 
     // A status program that shows the progress of the project
     const status_mod = b.createModule(.{
-        .root_source_file = b.path("testing/status.zig"),
+        .root_source_file = b.path("utils/src/status.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -70,7 +70,14 @@ pub fn build(b: *std.Build) void {
         .root_module = status_mod,
     });
 
-    b.installArtifact(status_exe);
+    // Install status to utils
+    const status_install = b.addInstallArtifact(
+        status_exe,
+        .{
+            .dest_sub_path = "../../utils/status",
+        },
+    );
+    b.getInstallStep().dependOn(&status_install.step);
 
     const run_status_cmd = b.addRunArtifact(status_exe);
 
@@ -85,6 +92,29 @@ pub fn build(b: *std.Build) void {
 
     // Make status the default run command
     run_step.dependOn(&run_status_cmd.step);
+
+    // Add excel-position utility
+    const excel_view_mod = b.createModule(.{
+        .root_source_file = b.path("utils/src/excel-view.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const excel_view_exe = b.addExecutable(.{
+        .name = "excel-view",
+        .root_module = excel_view_mod,
+    });
+
+    // Install excel-view to utils
+    const excel_view_install = b.addInstallArtifact(excel_view_exe, .{
+        .dest_sub_path = "../../utils/excel-view",
+    });
+    b.getInstallStep().dependOn(&excel_view_install.step);
+
+    // Create a step for building and installing utilities
+    const utils_step = b.step("utils", "Build and install utility programs");
+    utils_step.dependOn(&status_install.step);
+    utils_step.dependOn(&excel_view_install.step);
 
     // Create executables for each example
     const examples_dir = "examples";
