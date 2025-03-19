@@ -8,6 +8,7 @@ Common usage:
   python3 utils/autocheck.py example_name --build --run        # Build, run and check
   python3 utils/autocheck.py example_name --ignore-styles      # Ignore style differences
   python3 utils/autocheck.py --all                             # Check all examples
+  python3 utils/autocheck.py --list-broken                     # List known broken examples
 """
 
 import os
@@ -49,10 +50,42 @@ PROJECT_ROOT = Path(__file__).parent.parent
 EXAMPLES_DIR = PROJECT_ROOT / "examples"
 REFERENCE_DIR = PROJECT_ROOT / "testing" / "reference-xls"
 RESULTS_DIR = PROJECT_ROOT / "testing" / "results"
+BROKEN_FILE = PROJECT_ROOT / "testing" / ".broken"
+
+
+def load_broken_examples():
+    """Load list of known broken examples from testing/.broken file"""
+    broken_examples = set()
+    
+    if BROKEN_FILE.exists():
+        with open(BROKEN_FILE, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    broken_examples.add(line)
+    
+    return broken_examples
+
+
+def is_broken_example(example_name, broken_examples=None):
+    """Check if example is in the list of known broken examples"""
+    if broken_examples is None:
+        broken_examples = load_broken_examples()
+    
+    return example_name in broken_examples
 
 
 def check_single_example(example_name, args):
     """Run checks on a single example"""
+    # Check if example is known to be broken
+    broken_examples = load_broken_examples()
+    is_broken = is_broken_example(example_name, broken_examples)
+    
+    if is_broken and not args.force:
+        print(f"{example_name} ⚠️ is listed in testing/.broken as a known broken example")
+        print("Use --force to check it anyway")
+        return True  # Return success for broken examples unless forced
+    
     # Check if example exists, unless in file-only mode
     if not args.file_only:
         example_file = EXAMPLES_DIR / f"{example_name}.zig"
@@ -63,19 +96,19 @@ def check_single_example(example_name, args):
     # Build if requested
     if args.build:
         if not build_example(example_name, PROJECT_ROOT):
-            return False
+            return is_broken  # Return success for broken examples
     
     # Run if requested
     if args.run:
         if not run_example(example_name, PROJECT_ROOT):
-            return False
+            return is_broken  # Return success for broken examples
     
     # Look for the Excel file
     excel_file = Path(f"{example_name}.xlsx")
     if not excel_file.exists():
         print(f"❌ Excel file not found: {excel_file}")
         print("Run with --run option to generate it")
-        return False
+        return is_broken  # Return success for broken examples
     
     print(f"\n=== Checking Excel file: {excel_file} ===\n")
     
@@ -84,19 +117,19 @@ def check_single_example(example_name, args):
         workbook = openpyxl.load_workbook(excel_file)
         
         # Run checks
-        print("Checking formulas...")
+        print(f"[{example_name}] Checking formulas...")
         formula_check = check_formulas(workbook, example_name)
         
-        print("Checking string null-termination...")
-        string_check = check_string_null_termination(workbook)
+        print(f"[{example_name}] Checking string null-termination...")
+        string_check = check_string_null_termination(workbook, example_name)
         
-        print("Checking XML content...")
+        print(f"[{example_name}] Checking XML content...")
         xml_check = check_xml_content(example_name)
         
-        print("Checking binary compatibility...")
+        print(f"[{example_name}] Checking binary compatibility...")
         binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
         
-        print("Comparing with reference file...")
+        print(f"[{example_name}] Comparing with reference file...")
         content_check = compare_with_reference(
             example_name, 
             REFERENCE_DIR, 
@@ -106,24 +139,33 @@ def check_single_example(example_name, args):
         )
         
         # Summary
-        print("\n=== Check Summary ===")
+        print(f"\n=== Check Summary for {example_name} ===")
         print(f"Formula Check: {'✅ PASSED' if formula_check else '❌ FAILED'}")
         print(f"String Null-Termination: {'✅ PASSED' if string_check else '❌ FAILED'}")
         print(f"XML Check: {'✅ PASSED' if xml_check else '❌ FAILED'}")
         print(f"Binary Compatibility: {'✅ PASSED' if binary_check else '❌ FAILED'}")
         print(f"Content Check: {'✅ PASSED' if content_check else '❌ FAILED'}")
         
-        if formula_check and string_check and xml_check and binary_check and content_check:
-            print("\n✅ All checks passed! The file should pass manual verification.")
+        all_passed = formula_check and string_check and xml_check and binary_check and content_check
+        
+        if is_broken and not all_passed:
+            print(f"\n{example_name} ⚠️ Known broken example failed checks as expected.")
+            return True  # Return success for broken examples that fail
+        elif is_broken and all_passed:
+            print(f"\n{example_name} ⚠️ This example is listed as broken but all checks passed!")
+            print("Consider removing it from testing/.broken")
+            return False  # Fail when a "broken" example passes all checks
+        elif all_passed:
+            print(f"\n{example_name} ✅ All checks passed! The file should pass manual verification.")
             return True
         else:
-            print("\n⚠️ Some checks failed. Review issues before manual verification.")
+            print(f"\n{example_name} ⚠️ Some checks failed. Review issues before manual verification.")
             return False
             
     except Exception as e:
-        print(f"❌ Error checking Excel file: {e}")
+        print(f"{example_name} ❌ Error checking Excel file: {e}")
         traceback.print_exc()
-        return False
+        return is_broken  # Return success for broken examples
 
 
 def check_all_examples(args):
@@ -131,20 +173,32 @@ def check_all_examples(args):
     # Get all example files
     example_files = list(EXAMPLES_DIR.glob("*.zig"))
     failed_examples = []
+    broken_examples = load_broken_examples()
     
     for example_file in example_files:
         example_name = example_file.stem
         if example_name == "status":  # Skip status binary
             continue
             
+        # Skip broken examples unless forced
+        if is_broken_example(example_name, broken_examples) and not args.force:
+            print(f"{example_name} [BROKEN] ⚠️ Skipping as known broken example")
+            continue
+            
         # Run the example
         if not run_example(example_name, PROJECT_ROOT, quiet=True):
+            if is_broken_example(example_name, broken_examples):
+                print(f"{example_name} [BROKEN] ✅ Failed to run as expected")
+                continue
             failed_examples.append((example_name, "Failed to run example"))
             continue
             
         # Check the Excel file
         excel_file = Path(f"{example_name}.xlsx")
         if not excel_file.exists():
+            if is_broken_example(example_name, broken_examples):
+                print(f"{example_name} [BROKEN] ✅ Excel file not generated as expected")
+                continue
             failed_examples.append((example_name, "Excel file not generated"))
             continue
             
@@ -154,7 +208,7 @@ def check_all_examples(args):
             
             # Run checks
             formula_check = check_formulas(workbook, example_name)
-            string_check = check_string_null_termination(workbook)
+            string_check = check_string_null_termination(workbook, example_name)
             xml_check = check_xml_content(example_name)
             binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
             content_check = compare_with_reference(
@@ -166,23 +220,31 @@ def check_all_examples(args):
                 ignore_styles=args.ignore_styles
             )
             
-            if formula_check and string_check and xml_check and binary_check and content_check:
-                print(f"✅ {example_name}")
+            all_passed = formula_check and string_check and xml_check and binary_check and content_check
+            
+            if is_broken_example(example_name, broken_examples):
+                if all_passed:
+                    print(f"{example_name} [BROKEN] ⚠️ Unexpectedly passed all checks")
+                    failed_examples.append((example_name, "Broken example passed all checks"))
+                else:
+                    print(f"{example_name} [BROKEN] ✅ Failed checks as expected")
+            elif all_passed:
+                print(f"{example_name} ✅")
             else:
                 failed_examples.append((example_name, "One or more checks failed"))
                 # Re-run checks with verbose output to show details
                 print(f"\nDetailed output for {example_name}:")
                 try:
                     workbook = openpyxl.load_workbook(Path(f"{example_name}.xlsx"))
-                    print("\nChecking formulas...")
+                    print(f"\n[{example_name}] Checking formulas...")
                     check_formulas(workbook, example_name)
-                    print("\nChecking string null-termination...")
-                    check_string_null_termination(workbook)
-                    print("\nChecking XML content...")
+                    print(f"\n[{example_name}] Checking string null-termination...")
+                    check_string_null_termination(workbook, example_name)
+                    print(f"\n[{example_name}] Checking XML content...")
                     check_xml_content(example_name)
-                    print("\nChecking binary compatibility...")
+                    print(f"\n[{example_name}] Checking binary compatibility...")
                     check_binary_compatibility(example_name, REFERENCE_DIR)
-                    print("\nComparing with reference file...")
+                    print(f"\n[{example_name}] Comparing with reference file...")
                     compare_with_reference(
                         example_name, 
                         REFERENCE_DIR, 
@@ -195,18 +257,34 @@ def check_all_examples(args):
                     traceback.print_exc()
                 
         except Exception as e:
+            if is_broken_example(example_name, broken_examples):
+                print(f"{example_name} [BROKEN] ✅ Error occurred as expected: {e}")
+                continue
             failed_examples.append((example_name, f"Error checking Excel file: {e}"))
     
     # Print detailed failure information if any
     if failed_examples:
         print("\n=== Failed Examples ===")
         for example_name, error in failed_examples:
-            print(f"\n❌ {example_name}: {error}")
+            print(f"\n{example_name} ❌ {error}")
         
         return False
     else:
         print("\n✅ All examples passed!")
         return True
+
+
+def list_broken_examples():
+    """List examples marked as broken in testing/.broken"""
+    broken_examples = load_broken_examples()
+    
+    if not broken_examples:
+        print("No examples are currently marked as broken.")
+        return
+    
+    print("=== Known Broken Examples ===")
+    for example in sorted(broken_examples):
+        print(f"- {example}")
 
 
 def main():
@@ -218,8 +296,14 @@ def main():
     parser.add_argument("--file-only", action="store_true", help="Skip example file check, just check the Excel file")
     parser.add_argument("--all", action="store_true", help="Check all examples (except status)")
     parser.add_argument("--ignore-styles", action="store_true", help="Ignore style differences in comparison")
+    parser.add_argument("--force", "-f", action="store_true", help="Force checking of known broken examples")
+    parser.add_argument("--list-broken", action="store_true", help="List examples marked as broken")
     
     args = parser.parse_args()
+    
+    if args.list_broken:
+        list_broken_examples()
+        return 0
     
     if args.all:
         if args.example:
@@ -229,7 +313,7 @@ def main():
         return 0 if check_all_examples(args) else 1
     
     if not args.example:
-        print("Error: Must specify either an example name or --all")
+        print("Error: Must specify either an example name or --all or --list-broken")
         return 1
     
     return 0 if check_single_example(args.example, args) else 1

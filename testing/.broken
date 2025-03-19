@@ -1,0 +1,4 @@
+# List of examples that are known to be broken
+# Format: One example name per line (without .zig extension)
+# Examples listed here will be marked as "expected failures" in the auto-checker 
+broken_formula 
