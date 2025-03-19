@@ -338,4 +338,96 @@ pub const Worksheet = struct {
             format,
         );
     }
+
+    /// Set the default row properties
+    /// height: The height of the row in points
+    /// hidden: If true, hide all rows that don't have data
+    pub fn setDefaultRow(
+        self: *Worksheet,
+        height: f64,
+        hidden: bool,
+    ) void {
+        _ = c.worksheet_set_default_row(
+            self.worksheet,
+            height,
+            if (hidden) c.LXW_TRUE else c.LXW_FALSE,
+        );
+    }
+
+    /// Hide a specific row
+    pub fn hideRow(
+        self: *Worksheet,
+        row: u32,
+    ) void {
+        const options = c.lxw_row_col_options{
+            .hidden = 1,
+            .level = 0,
+            .collapsed = 0,
+        };
+        _ = c.worksheet_set_row_opt(
+            self.worksheet,
+            row,
+            15, // Default Excel row height
+            null,
+            &options,
+        );
+    }
+
+    /// Set column properties with additional options
+    /// first_col, last_col: Column range to format
+    /// width: The width of the columns
+    /// format: Optional formatting
+    /// hidden: If true, hide the columns
+    pub fn setColumnOpt(
+        self: *Worksheet,
+        first_col: u16,
+        last_col: u16,
+        width: f64,
+        format: ?*format_mod.Format,
+        hidden: bool,
+    ) void {
+        var options = c.lxw_row_col_options{
+            .hidden = if (hidden) 1 else 0,
+            .level = 0,
+            .collapsed = 0,
+        };
+
+        const format_ptr = if (format) |f| f.format else null;
+
+        _ = c.worksheet_set_column_opt(
+            self.worksheet,
+            first_col,
+            last_col,
+            width,
+            format_ptr,
+            &options,
+        );
+    }
+
+    /// Set column properties using a column range string like "A:Z"
+    /// column_range: Column range in string format (e.g., "A:Z", "C:D")
+    /// width: The width of the columns
+    /// format: Optional formatting
+    /// hidden: If true, hide the columns
+    pub fn setColumnOptRange(
+        self: *Worksheet,
+        column_range: []const u8,
+        width: f64,
+        format: ?*format_mod.Format,
+        hidden: bool,
+    ) !void {
+        // Split the range into start and end columns
+        var iter = std.mem.splitScalar(u8, column_range, ':');
+        const start_col_str = iter.next() orelse return error.InvalidRange;
+        const end_col_str = iter.next() orelse return error.InvalidRange;
+
+        // Check if there are more parts than expected (i.e., more than one colon)
+        if (iter.next() != null) return error.TooManyColonsInRange;
+
+        // Convert column letters to indices
+        const first_col = try cell_utils.cell.colToIndex(start_col_str);
+        const last_col = try cell_utils.cell.colToIndex(end_col_str);
+
+        self.setColumnOpt(first_col, last_col, width, format, hidden);
+    }
 };

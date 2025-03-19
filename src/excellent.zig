@@ -47,3 +47,15 @@ pub fn dateTimeToLxwDateTime(_: f64) @import("xlsxwriter").lxw_datetime {
         .sec = 0,
     };
 }
+
+// Include all test files in the test build
+comptime {
+    _ = @import("test_worksheet.zig");
+    _ = @import("test_excellent.zig");
+    _ = @import("test_format.zig");
+    _ = @import("test_workbook.zig");
+    _ = @import("test_styled.zig");
+    _ = @import("test_cell_utils.zig");
+    _ = @import("test_error_utils.zig");
+    _ = @import("test_fail.zig");
+}

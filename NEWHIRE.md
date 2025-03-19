@@ -191,4 +191,80 @@ If verification fails:
 5. For formulas, use the C library's exact syntax rather than creating your own
 
 Remember that the goal is binary compatibility with the reference files, not just visual similarity.
+
+## Unit Testing
+
+### Test Organization
+The project follows a strict test organization pattern:
+
+1. Each API implementation file in `src/` has a corresponding test file prefixed with `test_`. For example:
+   - `format.zig` → `test_format.zig`
+   - `workbook.zig` → `test_workbook.zig`
+   - `worksheet.zig` → `test_worksheet.zig`
+
+2. All test files are located in the `src/` directory alongside their implementation files.
+
+3. Tests are imported and included in the build through `excellent.zig` using a comptime block:
+```zig
+comptime {
+    _ = @import("test_worksheet.zig");
+    _ = @import("test_format.zig");
+    // ... other test files ...
+}
+```
+
+### Running Tests
+To run the unit tests:
+
+```bash
+# Run all tests
+zig build test
+
+# Run a specific test file directly
+zig test src/test_worksheet.zig
+
+# Run tests with verbose output
+zig build test --verbose
+```
+
+### Writing Tests
+When writing tests, follow these guidelines:
+
+1. Test files should import their dependencies through `excellent.zig`:
+```zig
+const std = @import("std");
+const excellent = @import("excellent.zig");
+const Format = excellent.Format;  // Import what you need
+```
+
+2. Each test function should be marked with the `test` keyword and a descriptive name:
+```zig
+test "format_creation" {
+    // Test code here
+}
+```
+
+3. Always clean up resources in tests using `defer`:
+```zig
+var workbook = try Workbook.create(std.testing.allocator, "/tmp/test.xlsx");
+defer {
+    _ = workbook.close() catch {};
+    workbook.deinit();
+}
+```
+
+4. Use the standard testing utilities from `std.testing`:
+```zig
+try std.testing.expectEqual(expected, actual);
+try std.testing.expectError(error.SomeError, function_that_errors());
+```
+
+### Test Coverage
+The test suite covers:
+- API functionality and correctness
+- Resource management (memory leaks, proper cleanup)
+- Error handling
+- Edge cases and invalid inputs
+
+When adding new features, ensure corresponding tests are added to maintain test coverage.
   
