@@ -1,2 +1,5 @@
 zig-out
 .zig-cache
+.jj
+utils/status
+utils/excel-view
