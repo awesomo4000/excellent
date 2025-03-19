@@ -18,7 +18,8 @@ from pathlib import Path
 import openpyxl
 import traceback
 
-# Add the project root to sys.path to allow imports to work both when run as a module and directly
+# Add the project root to sys.path to allow imports to work both when run as a module 
+# and directly
 current_dir = Path(__file__).parent
 project_root = current_dir.parent
 sys.path.insert(0, str(project_root))
