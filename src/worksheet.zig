@@ -574,4 +574,77 @@ pub const Worksheet = struct {
         );
         if (result != c.LXW_NO_ERROR) return error.BackgroundFailed;
     }
+
+    /// Write a comment to a cell
+    pub fn writeComment(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        comment: []const u8,
+    ) !void {
+        // Ensure comment is null-terminated
+        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment);
+        defer self.workbook.allocator.free(null_term_comment);
+
+        const result = c.worksheet_write_comment(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            null_term_comment.ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.WriteFailed;
+    }
+
+    /// Write a comment to a cell using a cell reference (e.g., "A1", "B2")
+    pub fn writeCommentCell(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        comment: []const u8,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        try self.writeComment(pos.row, pos.col, comment);
+    }
+
+    /// Write a comment to a cell with options
+    pub fn writeCommentOpt(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        comment: []const u8,
+        options: *c.lxw_comment_options,
+    ) !void {
+        // Ensure comment is null-terminated
+        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment);
+        defer self.workbook.allocator.free(null_term_comment);
+
+        const result = c.worksheet_write_comment_opt(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            null_term_comment.ptr,
+            options,
+        );
+        if (result != c.LXW_NO_ERROR) return error.WriteFailed;
+    }
+
+    /// Write a comment to a cell with options using a cell reference
+    pub fn writeCommentOptCell(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        comment: []const u8,
+        options: *c.lxw_comment_options,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        try self.writeCommentOpt(pos.row, pos.col, comment, options);
+    }
+
+    /// Show all comments on the worksheet
+    pub fn showComments(self: *Worksheet) void {
+        _ = c.worksheet_show_comments(self.worksheet);
+    }
+
+    /// Hide all comments on the worksheet
+    pub fn hideComments(self: *Worksheet) void {
+        _ = c.worksheet_hide_comments(self.worksheet);
+    }
 };

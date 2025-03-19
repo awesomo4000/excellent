@@ -30,6 +30,7 @@ test "Chart - creation and basic operations" {
     _ = worksheet;
 
     var chart = try Chart.init(allocator, workbook.workbook, .column);
+    defer chart.deinit();
     try chart.addSeries("=Sheet1!$A$1:$A$5", "=Sheet1!$B$1:$B$5");
     try chart.setTitle("Test Chart");
     chart.setStyle(2);
@@ -59,6 +60,7 @@ test "Chart - font customization" {
     _ = worksheet;
 
     var chart = try Chart.init(allocator, workbook.workbook, .line);
+    defer chart.deinit();
     try chart.setTitle("Test Chart");
 
     const font = ChartFont{
@@ -95,6 +97,7 @@ test "Chart - all types support" {
     const chart_types = [_]ChartType{ .column, .bar, .line, .pie, .scatter, .area, .radar, .doughnut };
     for (chart_types) |chart_type| {
         var chart = try Chart.init(allocator, workbook.workbook, chart_type);
+        defer chart.deinit();
         try chart.setTitle("Test Chart");
         chart.setStyle(1);
     }
