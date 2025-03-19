@@ -190,16 +190,16 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
         print("Warning: Reference Excel file not found")
         return False
     
-    # Position Excel windows using excel-position.sh
+    # Position Excel windows using excel-view
     print("Positioning Excel windows...")
     print(f"Debug - Reference file path: {ref_excel_file}")
     print(f"Debug - Generated file path: {excel_file}")
     try:
-        # Get the absolute path to the excel-position.sh script
-        excel_position_script = root_dir / "utils" / "excel-position.sh"
+        # Get the absolute path to the excel-view utility
+        excel_view_utility = root_dir / "utils" / "excel-view"
         # Now position the windows using absolute paths
         subprocess.run([
-            str(excel_position_script),
+            str(excel_view_utility),
             str(ref_excel_file),  # Reference file first
             str(excel_file)       # Generated file second
         ], check=True)
