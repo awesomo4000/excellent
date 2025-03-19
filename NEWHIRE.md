@@ -146,6 +146,10 @@ The manual verification process helps ensure that the generated Excel files matc
 
 When implementing examples, you might encounter issues where your output file doesn't match the reference. Here are some common problems and solutions:
 
+### Build System
+
+- **DO NOT MODIFY build.zig**: The build system automatically discovers and builds examples from the examples/ directory. There is no need to manually register new examples or modify the build configuration.
+
 ### Zig Language Issues
 
 - **Deprecated std.mem.split**: As of Zig 0.14.0, `std.mem.split` is deprecated. Use `std.mem.splitScalar`, `std.mem.splitAny`, or `std.mem.splitSequence` instead, depending on your use case. Most string splitting with a single character delimiter should use `std.mem.splitScalar`.
@@ -161,6 +165,55 @@ When implementing examples, you might encounter issues where your output file do
   1. Ensure strings are properly null-terminated when sent to the C library
   2. Use `allocator.dupeZ()` to create null-terminated strings
   3. Check the exact format used in the reference example
+
+### Autofilter Implementation
+
+When implementing autofilter functionality, be aware of these key points:
+
+1. **Row Visibility**: Excel doesn't automatically hide filtered rows. You must:
+   - Manually hide rows that don't match the filter criteria
+   - Apply row hiding BEFORE setting the autofilter and filter conditions
+   - Use `worksheet.hideRow()` for individual rows or `worksheet.setDefaultRow()` for bulk hiding
+
+2. **Filter Criteria Application**:
+   - Apply the autofilter first (`worksheet.autofilter()`)
+   - Then apply filter conditions (`worksheet.filterColumn()`)
+   - For multiple conditions, use `filterColumn2()` with appropriate operators (AND/OR)
+   - Match the exact filtering logic in your row hiding code
+
+3. **Common Gotchas**:
+   - String comparisons must handle null-termination correctly
+   - Numeric comparisons should match the exact ranges in filter conditions
+   - When using multiple filters, ensure row hiding logic matches ALL filter conditions
+   - For blank/non-blank filters, use empty string comparison appropriately
+
+4. **Testing Strategy**:
+   - Always compare with reference files both visually and using autocheck
+   - Pay special attention to row heights and visibility states
+   - Test with various filter combinations to ensure correct row hiding
+   - Verify that filter dropdowns show correct state in Excel
+
+Example pattern for implementing filters:
+```zig
+// 1. Write data
+try writeWorksheetData(&worksheet);
+
+// 2. Hide rows that don't match filter criteria
+for (data, 0..) |row, i| {
+    if (!matchesFilterCriteria(row)) {
+        worksheet.hideRow(@intCast(i + 1));
+    }
+}
+
+// 3. Apply autofilter
+try worksheet.autofilter(0, 0, lastRow, lastCol);
+
+// 4. Set filter conditions
+try worksheet.filterColumn(0, .{
+    .criteria = .equal_to,
+    .value_string = "SomeValue",
+});
+```
 
 ### String Handling
 
