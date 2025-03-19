@@ -173,11 +173,11 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
         print(f"Error running example: {example_name}")
         return False
     
-    # Determine the Excel file path
-    excel_file = root_dir / f"generated_{example_name}.xlsx"
+    # Determine the Excel file path - now using the temp file from zig-out/bin
+    excel_file = root_dir / "zig-out" / "bin" / f"{example_name}.xlsx"
     
     if not excel_file.exists():
-        print(f"Excel file not found: generated_{example_name}.xlsx")
+        print(f"Excel file not found: zig-out/bin/{example_name}.xlsx")
         return False
     
     # Wait for the file to be fully written
