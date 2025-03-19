@@ -32,7 +32,11 @@ Directories in the project are:
 
 **utils/status** : A program that will show the current status of progress on creating the examples corresponding to the examples in zig-c-binding-examples.
 
-**utils/check_excel.py** : A Python script that checks Excel files for common issues and compatibility with reference files.
+**utils/autocheck.py** : A Python script that checks Excel files for common issues and compatibility with reference files.
+
+**utils/verify.py** : A script that helps automate the process of taking screenshots of Excel files for manual verification.
+
+**utils/unverify.py** : A script to remove verification status from examples after API changes.
 
 ## Workflow
 
@@ -55,11 +59,11 @@ zig build status -- hello
 zig build run verify -- hello
 ```
 
-### Automated Excel Linting
-Before submitting an example for manual verification, use the `check_excel.py` script to catch common issues:
+### Automated Excel Checking
+Before submitting an example for manual verification, use the `autocheck.py` script to catch common issues:
 
 ```bash
-python3 utils/check_excel.py tutorial1 --build --run
+python3 utils/autocheck.py tutorial1 --build --run
 ```
 
 This script performs several checks on the generated Excel file:
@@ -78,13 +82,16 @@ pip install openpyxl
 Common usage patterns:
 ```bash
 # Build, run and check an example
-python3 utils/check_excel.py example_name --build --run
+python3 utils/autocheck.py example_name --build --run
 
 # Check an existing Excel file without building
-python3 utils/check_excel.py example_name 
+python3 utils/autocheck.py example_name 
 
 # Check any Excel file (doesn't need to be an example)
-python3 utils/check_excel.py some_file --file-only
+python3 utils/autocheck.py some_file --file-only
+
+# Check all examples at once
+python3 utils/autocheck.py --all
 ```
 
 Using this tool before manual verification saves time by catching technical issues early, allowing you to fix problems before asking a human to verify the visual appearance.
@@ -92,9 +99,9 @@ Using this tool before manual verification saves time by catching technical issu
 ### Manual Verification Process
 The manual verification process helps ensure that the generated Excel files match the reference files:
 
-1. Run the manual verifier:
+1. Run the verifier:
 ```bash
-./utils/manual-verify.py hello
+./utils/verify.py hello
 ```
 
 2. The script will:
@@ -107,6 +114,18 @@ The manual verification process helps ensure that the generated Excel files matc
      - `hello_output.txt` (verification result)
 
 3. The status program (`zig build status`) checks for the presence of the output.txt file in the results directory to determine if an example is verified.
+
+4. If you need to unverify examples after API changes, use the unverify.py script:
+```bash
+# Unverify a specific example
+./utils/unverify.py hello
+
+# List all verified examples
+./utils/unverify.py --list
+
+# Unverify all examples
+./utils/unverify.py --all
+```
 
 ## Coding Standards
 
@@ -159,9 +178,10 @@ When implementing examples, you might encounter issues where your output file do
 
 If verification fails:
 1. Compare your implementation with the reference example line by line
-2. Try manual verification to see exactly what's different
-3. Sometimes you need to rebuild with the exact same values as the reference
-4. For formulas, use the C library's exact syntax rather than creating your own
+2. Run the autocheck.py script to identify technical issues
+3. Use verify.py to see exactly what's different visually
+4. Sometimes you need to rebuild with the exact same values as the reference
+5. For formulas, use the C library's exact syntax rather than creating your own
 
 Remember that the goal is binary compatibility with the reference files, not just visual similarity.
   
