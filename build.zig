@@ -77,7 +77,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
 
     // Add coverage step using kcov
-    const coverage_dir = b.pathJoin(&.{ b.install_prefix, "coverage" });
+    const coverage_dir = b.path("coverage");
     const coverage_cmd = b.addSystemCommand(&[_][]const u8{
         "sh",
         "-c",
@@ -85,8 +85,8 @@ pub fn build(b: *std.Build) void {
             \\mkdir -p {s} && \
             \\kcov --clean --include-pattern=src/ {s} {s}
         , .{
-            coverage_dir,
-            coverage_dir,
+            coverage_dir.getPath(b),
+            coverage_dir.getPath(b),
             b.pathJoin(&.{ b.install_prefix, "bin", "excellent_test" }),
         }),
     });
