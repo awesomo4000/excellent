@@ -558,4 +558,20 @@ pub const Worksheet = struct {
         );
         if (result != c.LXW_NO_ERROR) return error.FilterColumn2Failed;
     }
+
+    /// Set the background image for the worksheet
+    pub fn setBackground(
+        self: *Worksheet,
+        image_path: []const u8,
+    ) !void {
+        // Ensure the path is null-terminated
+        const null_term_path = try self.workbook.allocator.dupeZ(u8, image_path);
+        defer self.workbook.allocator.free(null_term_path);
+
+        const result = c.worksheet_set_background(
+            self.worksheet,
+            null_term_path.ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.BackgroundFailed;
+    }
 };
