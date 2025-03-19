@@ -21,26 +21,30 @@ pub fn build(b: *std.Build) void {
         "Specify which example to run",
     );
 
-    const xlsxwriter_dep = b.dependency("xlsxwriter", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    const xlsxwriter_dep =
+        b.dependency("xlsxwriter", .{
+            .target = target,
+            .optimize = optimize,
+        });
 
+    // Add a module for the excellent library
     const lib_mod = b.createModule(.{
         .root_source_file = b.path("src/excellent.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    lib_mod.addImport("xlsxwriter", xlsxwriter_dep.module("xlsxwriter"));
+    lib_mod.addImport("xlsxwriter", xlsxwriter_dep.module(
+        "xlsxwriter",
+    ));
 
-    const exe_mod = b.createModule(.{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
+    // const exe_mod = b.createModule(.{
+    //     .root_source_file = b.path("src/main.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
-    exe_mod.addImport("excellent", lib_mod);
+    // exe_mod.addImport("excellent", lib_mod);
 
     const lib = b.addLibrary(.{
         .linkage = .static,
@@ -57,12 +61,43 @@ pub fn build(b: *std.Build) void {
 
     const lib_unit_tests = b.addTest(.{
         .root_module = lib_mod,
+        .strip = false,
+        .name = "excellent_test",
     });
+
+    // Install the test binary
+    const install_test = b.addInstallArtifact(lib_unit_tests, .{});
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
-    const test_step = b.step("test", "Run unit tests");
+    const test_step = b.step(
+        "test",
+        "Run unit tests",
+    );
     test_step.dependOn(&run_lib_unit_tests.step);
+
+    // Add coverage step using kcov
+    const coverage_dir = b.pathJoin(&.{ b.install_prefix, "coverage" });
+    const coverage_cmd = b.addSystemCommand(&[_][]const u8{
+        "sh",
+        "-c",
+        b.fmt(
+            \\mkdir -p {s} && \
+            \\kcov --clean --include-pattern=src/ {s} {s}
+        , .{
+            coverage_dir,
+            coverage_dir,
+            b.pathJoin(&.{ b.install_prefix, "bin", "excellent_test" }),
+        }),
+    });
+
+    coverage_cmd.step.dependOn(&install_test.step);
+
+    const coverage_step = b.step(
+        "coverage",
+        "Run tests with kcov coverage analysis",
+    );
+    coverage_step.dependOn(&coverage_cmd.step);
 
     // A status program that shows the progress of the project
     const status_mod = b.createModule(.{
@@ -93,7 +128,10 @@ pub fn build(b: *std.Build) void {
         run_status_cmd.addArgs(args);
     }
 
-    const status_step = b.step("status", "Run the status program");
+    const status_step = b.step(
+        "status",
+        "Run the status program",
+    );
     status_step.dependOn(&run_status_cmd.step);
 
     // Make status the default run command
@@ -112,23 +150,35 @@ pub fn build(b: *std.Build) void {
     });
 
     // Install excel-view to utils
-    const excel_view_install = b.addInstallArtifact(excel_view_exe, .{
-        .dest_sub_path = "../../utils/excel-view",
-    });
+    const excel_view_install = b.addInstallArtifact(
+        excel_view_exe,
+        .{
+            .dest_sub_path = "../../utils/excel-view",
+        },
+    );
     b.getInstallStep().dependOn(&excel_view_install.step);
 
     // Create a step for building and installing utilities
-    const utils_step = b.step("utils", "Build and install utility programs");
+    const utils_step = b.step(
+        "utils",
+        "Build and install utility programs",
+    );
     utils_step.dependOn(&status_install.step);
     utils_step.dependOn(&excel_view_install.step);
 
     // Create executables for each example
     const examples_dir = "examples";
-    const examples_step = b.step("examples", "Build all examples");
+    const examples_step = b.step(
+        "examples",
+        "Build all examples",
+    );
 
     // If a specific example is requested, only build that one
     if (example_option) |example| {
-        const example_path = b.fmt("{s}/{s}.zig", .{ examples_dir, example });
+        const example_path = b.fmt(
+            "{s}/{s}.zig",
+            .{ examples_dir, example },
+        );
         std.debug.print("Building example: {s}\n", .{example_path});
         const example_mod = b.createModule(.{
             .root_source_file = b.path(example_path),
@@ -150,16 +200,27 @@ pub fn build(b: *std.Build) void {
         run_step.dependOn(&run_example.step);
     } else {
         // Otherwise build all examples
-        var dir = std.fs.cwd().openDir(examples_dir, .{ .iterate = true }) catch unreachable;
+        var dir = std.fs.cwd().openDir(
+            examples_dir,
+            .{ .iterate = true },
+        ) catch unreachable;
         defer dir.close();
 
         var it = dir.iterate();
         while (it.next() catch unreachable) |entry| {
-            if (entry.kind != .file or !std.mem.endsWith(u8, entry.name, ".zig")) continue;
+            if (entry.kind != .file or !std.mem.endsWith(
+                u8,
+                entry.name,
+                ".zig",
+            )) continue;
 
-            const example_name = entry.name[0 .. entry.name.len - 4];
+            const example_name =
+                entry.name[0 .. entry.name.len - 4];
             const example_mod = b.createModule(.{
-                .root_source_file = b.path(b.fmt("{s}/{s}", .{ examples_dir, entry.name })),
+                .root_source_file = b.path(b.fmt(
+                    "{s}/{s}",
+                    .{ examples_dir, entry.name },
+                )),
                 .target = target,
                 .optimize = optimize,
             });
