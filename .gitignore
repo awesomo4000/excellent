@@ -4,3 +4,5 @@ zig-out
 utils/status
 utils/excel-view
 .cursorignore
+__pycache__/
+x/

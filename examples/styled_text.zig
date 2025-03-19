@@ -1,6 +1,5 @@
 const std = @import("std");
 const excel = @import("excellent");
-const xlsxwriter = @import("xlsxwriter");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -27,7 +26,7 @@ pub fn main() !void {
     // Create a highlighted format
     var highlight_format = try workbook.addFormat();
     _ = highlight_format.setBgColor(0xFFFF00);
-    _ = highlight_format.setPattern(1); // LXW_PATTERN_SOLID
+    _ = highlight_format.setPattern(1); // Solid pattern
     _ = highlight_format.setFontColor(0x000000);
     _ = highlight_format.setBorder(.thin);
 

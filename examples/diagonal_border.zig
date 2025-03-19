@@ -1,9 +1,6 @@
 //
 // A simple formatting example that demonstrates how to add diagonal
-// cell borders using the libxlsxwriter library.
-//
-// Copyright 2014-2025, John McNamara, jmcnamara@cpan.org
-//
+// cell borders
 //
 
 const std = @import("std");
