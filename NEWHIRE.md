@@ -30,7 +30,7 @@ Directories in the project are:
 
 **zig-out/bin/** : Output executables from the zig build process (example programs) will be here. When executed, they produce a spreadsheet. This will be compared against a reference spreadsheet in **testing/reference-xls/*.xlsx** .
 
-**testing/status.zig** : A program that will show the current status of progress on creating the examples corresponding to the examples in zig-c-binding-examples.
+**utils/status** : A program that will show the current status of progress on creating the examples corresponding to the examples in zig-c-binding-examples.
 
 **utils/check_excel.py** : A Python script that checks Excel files for common issues and compatibility with reference files.
 
