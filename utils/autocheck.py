@@ -17,15 +17,32 @@ from pathlib import Path
 import openpyxl
 import traceback
 
+# Add the project root to sys.path to allow imports to work both when run as a module and directly
+current_dir = Path(__file__).parent
+project_root = current_dir.parent
+sys.path.insert(0, str(project_root))
+
 # Import local modules
-from utils.excel_checks import (
-    check_formulas,
-    check_string_null_termination,
-    check_xml_content,
-    check_binary_compatibility
-)
-from utils.file_comparison import compare_with_reference, get_relative_path
-from utils.example_runner import build_example, run_example
+try:
+    # When run as module (python -m utils.autocheck)
+    from utils.excel_checks import (
+        check_formulas,
+        check_string_null_termination,
+        check_xml_content,
+        check_binary_compatibility
+    )
+    from utils.file_comparison import compare_with_reference, get_relative_path
+    from utils.example_runner import build_example, run_example
+except ModuleNotFoundError:
+    # When run directly (python utils/autocheck.py)
+    from excel_checks import (
+        check_formulas,
+        check_string_null_termination,
+        check_xml_content,
+        check_binary_compatibility
+    )
+    from file_comparison import compare_with_reference, get_relative_path
+    from example_runner import build_example, run_example
 
 # Set up paths
 PROJECT_ROOT = Path(__file__).parent.parent

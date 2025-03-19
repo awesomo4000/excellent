@@ -192,8 +192,6 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
     
     # Position Excel windows using excel-view
     print("Positioning Excel windows...")
-    print(f"Debug - Reference file path: {ref_excel_file}")
-    print(f"Debug - Generated file path: {excel_file}")
     try:
         # Get the absolute path to the excel-view utility
         excel_view_utility = root_dir / "utils" / "excel-view"

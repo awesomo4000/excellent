@@ -155,7 +155,7 @@ def check_xml_content(example_name):
                         return False
     
     except zipfile.BadZipFile:
-        print(f"❌ File is not a valid ZIP/XLSX file: {generated_file}")
+        print(f"❌ File is not a valid ZIP/XLSX file: {generated_file.name}")
         return False
     
     return True
