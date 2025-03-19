@@ -92,6 +92,9 @@ python3 utils/autocheck.py some_file --file-only
 
 # Check all examples at once
 python3 utils/autocheck.py --all
+
+# Ignore style differences in comparison (useful for array formulas and other cases where internal representation may differ)
+python3 utils/autocheck.py example_name --ignore-styles
 ```
 
 Using this tool before manual verification saves time by catching technical issues early, allowing you to fix problems before asking a human to verify the visual appearance.
