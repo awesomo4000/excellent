@@ -15,6 +15,8 @@ pub const Styled = @import("styled.zig").Styled;
 pub const Chart = @import("chart.zig").Chart;
 pub const ChartType = @import("chart.zig").ChartType;
 pub const ChartFont = @import("chart.zig").ChartFont;
+pub const DiagonalType = @import("format.zig").DiagonalType;
+pub const CommentOptions = @import("comment.zig").CommentOptions;
 
 /// Excel DateTime representation
 pub const DateTime = struct {
@@ -64,4 +66,8 @@ comptime {
     _ = @import("test_error_utils.zig");
     _ = @import("test_fail.zig");
     _ = @import("test_chart.zig");
+}
+
+test {
+    std.testing.refAllDecls(@This());
 }

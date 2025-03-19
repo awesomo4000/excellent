@@ -10,6 +10,7 @@ pub const Workbook = struct {
     workbook: *c.lxw_workbook,
     isOpen: bool = false,
     formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
+
     pub fn create(
         allocator: std.mem.Allocator,
         filename: []const u8,
@@ -24,6 +25,7 @@ pub const Workbook = struct {
             .filename = filename,
             .workbook = c_workbook,
             .isOpen = true,
+            .formats = std.ArrayList(*format_mod.Format).init(allocator),
         };
 
         return workbook;

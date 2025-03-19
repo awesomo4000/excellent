@@ -52,6 +52,9 @@ pub const Format = struct {
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: *Format) void {
+        // The format is owned by the workbook, so we don't need to free it
+        // But we should clear any resources we've allocated
+        self.format = undefined;
         self.allocator.destroy(self);
     }
 
@@ -168,6 +171,12 @@ pub const Format = struct {
     /// Set diagonal border color
     pub fn setDiagonalColor(self: *Format, color: u32) *Format {
         _ = c.format_set_diag_color(self.format, color);
+        return self;
+    }
+
+    /// Set text wrapping for a cell
+    pub fn setTextWrap(self: *Format) *Format {
+        _ = c.format_set_text_wrap(self.format);
         return self;
     }
 };

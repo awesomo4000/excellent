@@ -4,11 +4,19 @@ const format_mod = @import("format.zig");
 const cell_utils = @import("cell_utils.zig");
 const styled = @import("styled.zig");
 const chart = @import("chart.zig");
+const comment = @import("comment.zig");
 
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
     workbook: *@import("workbook.zig").Workbook,
     worksheet: *c.lxw_worksheet,
+
+    pub fn deinit(self: *Worksheet) void {
+        // The worksheet is owned by the workbook, so we don't need to free it
+        // But we should clear any resources we've allocated
+        self.worksheet = undefined;
+        self.workbook = undefined;
+    }
 
     /// Write a string to a cell, optionally with formatting
     pub fn writeString(
@@ -580,10 +588,10 @@ pub const Worksheet = struct {
         self: *Worksheet,
         row: usize,
         col: usize,
-        comment: []const u8,
+        comment_text: []const u8,
     ) !void {
-        // Ensure comment is null-terminated
-        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment);
+        // Ensure comment text is null-terminated
+        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment_text);
         defer self.workbook.allocator.free(null_term_comment);
 
         const result = c.worksheet_write_comment(
@@ -599,10 +607,10 @@ pub const Worksheet = struct {
     pub fn writeCommentCell(
         self: *Worksheet,
         cell_ref: []const u8,
-        comment: []const u8,
+        comment_text: []const u8,
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);
-        try self.writeComment(pos.row, pos.col, comment);
+        try self.writeComment(pos.row, pos.col, comment_text);
     }
 
     /// Write a comment to a cell with options
@@ -610,37 +618,49 @@ pub const Worksheet = struct {
         self: *Worksheet,
         row: usize,
         col: usize,
-        comment: []const u8,
-        options: *c.lxw_comment_options,
+        comment_text: []const u8,
+        options: comment.CommentOptions,
     ) !void {
-        // Ensure comment is null-terminated
-        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment);
+        // Ensure comment text is null-terminated
+        const null_term_comment = try self.workbook.allocator.dupeZ(u8, comment_text);
         defer self.workbook.allocator.free(null_term_comment);
+
+        // Convert options to C library format
+        var c_options = try options.toCOptions(self.workbook.allocator);
+
+        // Store author pointer so we can free it later if needed
+        const author_ptr = c_options.author;
 
         const result = c.worksheet_write_comment_opt(
             self.worksheet,
             @intCast(row),
             @intCast(col),
             null_term_comment.ptr,
-            options,
+            &c_options,
         );
+
+        // Free the author string if it was allocated
+        if (author_ptr != null) {
+            self.workbook.allocator.free(std.mem.sliceTo(author_ptr, 0));
+        }
+
         if (result != c.LXW_NO_ERROR) return error.WriteFailed;
     }
 
-    /// Write a comment to a cell with options using a cell reference
+    /// Write a comment to a cell with options using a cell reference (e.g., "A1", "B2")
     pub fn writeCommentOptCell(
         self: *Worksheet,
         cell_ref: []const u8,
-        comment: []const u8,
-        options: *c.lxw_comment_options,
+        comment_text: []const u8,
+        options: comment.CommentOptions,
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);
-        try self.writeCommentOpt(pos.row, pos.col, comment, options);
+        try self.writeCommentOpt(pos.row, pos.col, comment_text, options);
     }
 
-    /// Show all comments on the worksheet
+    /// Show all comments in the worksheet
     pub fn showComments(self: *Worksheet) void {
-        _ = c.worksheet_show_comments(self.worksheet);
+        c.worksheet_show_comments(self.worksheet);
     }
 
     /// Hide all comments on the worksheet
