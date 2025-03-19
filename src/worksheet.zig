@@ -3,6 +3,7 @@ const c = @import("xlsxwriter");
 const format_mod = @import("format.zig");
 const cell_utils = @import("cell_utils.zig");
 const styled = @import("styled.zig");
+const chart = @import("chart.zig");
 
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
@@ -359,7 +360,7 @@ pub const Worksheet = struct {
         self: *Worksheet,
         row: u32,
     ) void {
-        const options = c.lxw_row_col_options{
+        var options = c.lxw_row_col_options{
             .hidden = 1,
             .level = 0,
             .collapsed = 0,
@@ -429,5 +430,132 @@ pub const Worksheet = struct {
         const last_col = try cell_utils.cell.colToIndex(end_col_str);
 
         self.setColumnOpt(first_col, last_col, width, format, hidden);
+    }
+
+    pub fn insertChart(self: *Worksheet, row: usize, col: usize, chart_obj: chart.Chart) !void {
+        _ = c.worksheet_insert_chart(self.worksheet, @intCast(row), @intCast(col), chart_obj.inner);
+    }
+
+    /// Filter criteria for autofilter
+    pub const FilterCriteria = enum {
+        equal_to,
+        not_equal_to,
+        greater_than,
+        less_than,
+        greater_than_or_equal_to,
+        less_than_or_equal_to,
+        blanks,
+        non_blanks,
+    };
+
+    /// Filter rule for autofilter
+    pub const FilterRule = struct {
+        criteria: FilterCriteria,
+        value_string: ?[]const u8 = null,
+        value: f64 = 0,
+    };
+
+    /// Filter operator for combining two filter rules
+    pub const FilterOperator = enum {
+        and_op,
+        or_op,
+    };
+
+    /// Add an autofilter to a range of cells
+    pub fn autofilter(
+        self: *Worksheet,
+        first_row: u32,
+        first_col: u16,
+        last_row: u32,
+        last_col: u16,
+    ) !void {
+        const result = c.worksheet_autofilter(
+            self.worksheet,
+            first_row,
+            first_col,
+            last_row,
+            last_col,
+        );
+        if (result != c.LXW_NO_ERROR) return error.AutofilterFailed;
+    }
+
+    /// Add a filter rule to a column
+    pub fn filterColumn(
+        self: *Worksheet,
+        col: u16,
+        rule: FilterRule,
+    ) !void {
+        var c_rule = c.lxw_filter_rule{
+            .criteria = switch (rule.criteria) {
+                .equal_to => c.LXW_FILTER_CRITERIA_EQUAL_TO,
+                .not_equal_to => c.LXW_FILTER_CRITERIA_NOT_EQUAL_TO,
+                .greater_than => c.LXW_FILTER_CRITERIA_GREATER_THAN,
+                .less_than => c.LXW_FILTER_CRITERIA_LESS_THAN,
+                .greater_than_or_equal_to => c.LXW_FILTER_CRITERIA_GREATER_THAN_OR_EQUAL_TO,
+                .less_than_or_equal_to => c.LXW_FILTER_CRITERIA_LESS_THAN_OR_EQUAL_TO,
+                .blanks => c.LXW_FILTER_CRITERIA_BLANKS,
+                .non_blanks => c.LXW_FILTER_CRITERIA_NON_BLANKS,
+            },
+            .value_string = if (rule.value_string) |s| s.ptr else null,
+            .value = rule.value,
+        };
+
+        const result = c.worksheet_filter_column(
+            self.worksheet,
+            col,
+            &c_rule,
+        );
+        if (result != c.LXW_NO_ERROR) return error.FilterColumnFailed;
+    }
+
+    /// Add two filter rules to a column with a specified operator
+    pub fn filterColumn2(
+        self: *Worksheet,
+        col: u16,
+        rule1: FilterRule,
+        rule2: FilterRule,
+        operator: FilterOperator,
+    ) !void {
+        var c_rule1 = c.lxw_filter_rule{
+            .criteria = switch (rule1.criteria) {
+                .equal_to => c.LXW_FILTER_CRITERIA_EQUAL_TO,
+                .not_equal_to => c.LXW_FILTER_CRITERIA_NOT_EQUAL_TO,
+                .greater_than => c.LXW_FILTER_CRITERIA_GREATER_THAN,
+                .less_than => c.LXW_FILTER_CRITERIA_LESS_THAN,
+                .greater_than_or_equal_to => c.LXW_FILTER_CRITERIA_GREATER_THAN_OR_EQUAL_TO,
+                .less_than_or_equal_to => c.LXW_FILTER_CRITERIA_LESS_THAN_OR_EQUAL_TO,
+                .blanks => c.LXW_FILTER_CRITERIA_BLANKS,
+                .non_blanks => c.LXW_FILTER_CRITERIA_NON_BLANKS,
+            },
+            .value_string = if (rule1.value_string) |s| s.ptr else null,
+            .value = rule1.value,
+        };
+
+        var c_rule2 = c.lxw_filter_rule{
+            .criteria = switch (rule2.criteria) {
+                .equal_to => c.LXW_FILTER_CRITERIA_EQUAL_TO,
+                .not_equal_to => c.LXW_FILTER_CRITERIA_NOT_EQUAL_TO,
+                .greater_than => c.LXW_FILTER_CRITERIA_GREATER_THAN,
+                .less_than => c.LXW_FILTER_CRITERIA_LESS_THAN,
+                .greater_than_or_equal_to => c.LXW_FILTER_CRITERIA_GREATER_THAN_OR_EQUAL_TO,
+                .less_than_or_equal_to => c.LXW_FILTER_CRITERIA_LESS_THAN_OR_EQUAL_TO,
+                .blanks => c.LXW_FILTER_CRITERIA_BLANKS,
+                .non_blanks => c.LXW_FILTER_CRITERIA_NON_BLANKS,
+            },
+            .value_string = if (rule2.value_string) |s| s.ptr else null,
+            .value = rule2.value,
+        };
+
+        const result = c.worksheet_filter_column2(
+            self.worksheet,
+            col,
+            &c_rule1,
+            &c_rule2,
+            switch (operator) {
+                .and_op => c.LXW_FILTER_AND,
+                .or_op => c.LXW_FILTER_OR,
+            },
+        );
+        if (result != c.LXW_NO_ERROR) return error.FilterColumn2Failed;
     }
 };

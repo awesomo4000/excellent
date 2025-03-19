@@ -1,4 +1,5 @@
 const std = @import("std");
+const xlsxwriter = @import("xlsxwriter");
 
 // Re-export all module components
 pub const cell = @import("cell_utils.zig").cell;
@@ -10,6 +11,10 @@ pub const Workbook = @import("workbook.zig").Workbook;
 pub const Worksheet = @import("worksheet.zig").Worksheet;
 pub const StyledText = @import("styled.zig").StyledText;
 pub const StyledWriter = @import("styled.zig").StyledWriter;
+pub const Styled = @import("styled.zig").Styled;
+pub const Chart = @import("chart.zig").Chart;
+pub const ChartType = @import("chart.zig").ChartType;
+pub const ChartFont = @import("chart.zig").ChartFont;
 
 /// Excel DateTime representation
 pub const DateTime = struct {
@@ -58,4 +63,5 @@ comptime {
     _ = @import("test_cell_utils.zig");
     _ = @import("test_error_utils.zig");
     _ = @import("test_fail.zig");
+    _ = @import("test_chart.zig");
 }

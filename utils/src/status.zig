@@ -7,11 +7,12 @@ const fs = std.fs;
 const stdout = std.io.getStdOut();
 const stdoutWriter = stdout.writer();
 
+const passed_autocheck_file = "autochecked";
 const Example = struct {
     name: []const u8,
     implemented: bool,
     verified: bool,
-    excel_passing: bool,
+    autocheck_passed: bool,
     have_ref_xlsx: bool,
 };
 
@@ -111,14 +112,14 @@ fn setupExamples(
                 defer allocator.free(result_path);
                 break :blk fs.cwd().access(result_path, .{}) != error.FileNotFound;
             };
-            const excel_passing = blk: {
-                const excel_path = try std.fmt.allocPrint(
+            const autocheck_passed = blk: {
+                const autocheck_path = try std.fmt.allocPrint(
                     allocator,
-                    "testing/results/{s}/excel_passing",
-                    .{name},
+                    "testing/results/{s}/{s}",
+                    .{ name, passed_autocheck_file },
                 );
-                defer allocator.free(excel_path);
-                break :blk fs.cwd().access(excel_path, .{}) != error.FileNotFound;
+                defer allocator.free(autocheck_path);
+                break :blk fs.cwd().access(autocheck_path, .{}) != error.FileNotFound;
             };
             const have_ref_xlsx = blk: {
                 const ref_path = try std.fmt.allocPrint(
@@ -133,7 +134,7 @@ fn setupExamples(
                 .name = name,
                 .implemented = implemented,
                 .verified = verified,
-                .excel_passing = excel_passing,
+                .autocheck_passed = autocheck_passed,
                 .have_ref_xlsx = have_ref_xlsx,
             });
         }
@@ -169,8 +170,8 @@ fn printShortOutput(
     defer impl_names.deinit();
     var verified_names = std.ArrayList([]const u8).init(allocator);
     defer verified_names.deinit();
-    var excel_passing_names = std.ArrayList([]const u8).init(allocator);
-    defer excel_passing_names.deinit();
+    var autocheck_passed_names = std.ArrayList([]const u8).init(allocator);
+    defer autocheck_passed_names.deinit();
     var have_ref_xlsx_names = std.ArrayList([]const u8).init(allocator);
     defer have_ref_xlsx_names.deinit();
 
@@ -180,8 +181,8 @@ fn printShortOutput(
             if (example.verified) {
                 try verified_names.append(example.name);
             }
-            if (example.excel_passing) {
-                try excel_passing_names.append(example.name);
+            if (example.autocheck_passed) {
+                try autocheck_passed_names.append(example.name);
             }
         }
         if (example.have_ref_xlsx) {
@@ -209,12 +210,12 @@ fn printShortOutput(
     );
     try printWrappedNames(
         writer,
-        excel_passing_names.items,
+        autocheck_passed_names.items,
         "autoChecked: ",
     );
     try writer.print(
         "({d}/{d})\n\n",
-        .{ excel_passing_names.items.len, examples.items.len },
+        .{ autocheck_passed_names.items.len, examples.items.len },
     );
     try printWrappedNames(
         writer,
@@ -264,7 +265,7 @@ pub fn main() !void {
                     .{
                         example.name,
                         if (example.implemented) "[.zig]" else "",
-                        if (example.excel_passing) "[autochecked]" else "",
+                        if (example.autocheck_passed) "[autochecked]" else "",
                         if (example.verified) "[verified]" else "",
                         if (example.have_ref_xlsx) "[ref]" else "",
                     },
@@ -286,12 +287,12 @@ pub fn main() !void {
     // Show all examples
     var implemented: usize = 0;
     var verified: usize = 0;
-    var excel_passing: usize = 0;
+    var autocheck_passed: usize = 0;
     var have_ref_xlsx: usize = 0;
     for (examples.items) |example| {
         if (example.implemented) implemented += 1;
         if (example.verified) verified += 1;
-        if (example.excel_passing) excel_passing += 1;
+        if (example.autocheck_passed) autocheck_passed += 1;
         if (example.have_ref_xlsx) have_ref_xlsx += 1;
         try stdoutWriter.print(
             "{s: >30}  {s}  {s}  {s}  {s}\n",
@@ -299,7 +300,7 @@ pub fn main() !void {
                 example.name,
                 if (example.implemented) "zig" else "",
                 if (example.verified) "verf" else "",
-                if (example.excel_passing) "autochecked" else "",
+                if (example.autocheck_passed) "autochecked" else "",
                 if (example.have_ref_xlsx) "ref" else "",
             },
         );
@@ -311,9 +312,9 @@ pub fn main() !void {
             examples.items.len,
             @as(f64, @floatFromInt(implemented)) /
                 @as(f64, @floatFromInt(examples.items.len)) * 100.0,
-            excel_passing,
+            autocheck_passed,
             examples.items.len,
-            @as(f64, @floatFromInt(excel_passing)) /
+            @as(f64, @floatFromInt(autocheck_passed)) /
                 @as(f64, @floatFromInt(examples.items.len)) * 100.0,
             verified,
             examples.items.len,
