@@ -30,7 +30,8 @@ try:
         check_formulas,
         check_string_null_termination,
         check_xml_content,
-        check_binary_compatibility
+        check_binary_compatibility,
+        check_row_visibility
     )
     from utils.file_comparison import compare_with_reference, get_relative_path
     from utils.example_runner import build_example, run_example
@@ -40,7 +41,8 @@ except ModuleNotFoundError:
         check_formulas,
         check_string_null_termination,
         check_xml_content,
-        check_binary_compatibility
+        check_binary_compatibility,
+        check_row_visibility
     )
     from file_comparison import compare_with_reference, get_relative_path
     from example_runner import build_example, run_example
@@ -129,6 +131,9 @@ def check_single_example(example_name, args):
         print(f"[{example_name}] Checking binary compatibility...")
         binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
         
+        print(f"[{example_name}] Checking row visibility...")
+        visibility_check = check_row_visibility(example_name, REFERENCE_DIR)
+        
         print(f"[{example_name}] Comparing with reference file...")
         content_check = compare_with_reference(
             example_name, 
@@ -144,9 +149,10 @@ def check_single_example(example_name, args):
         print(f"String Null-Termination: {'✅ PASSED' if string_check else '❌ FAILED'}")
         print(f"XML Check: {'✅ PASSED' if xml_check else '❌ FAILED'}")
         print(f"Binary Compatibility: {'✅ PASSED' if binary_check else '❌ FAILED'}")
+        print(f"Row Visibility: {'✅ PASSED' if visibility_check else '❌ FAILED'}")
         print(f"Content Check: {'✅ PASSED' if content_check else '❌ FAILED'}")
         
-        all_passed = formula_check and string_check and xml_check and binary_check and content_check
+        all_passed = formula_check and string_check and xml_check and binary_check and visibility_check and content_check
         
         if is_broken and not all_passed:
             print(f"\n{example_name} ⚠️ Known broken example failed checks as expected.")
@@ -211,6 +217,7 @@ def check_all_examples(args):
             string_check = check_string_null_termination(workbook, example_name)
             xml_check = check_xml_content(example_name)
             binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
+            visibility_check = check_row_visibility(example_name, REFERENCE_DIR)
             content_check = compare_with_reference(
                 example_name, 
                 REFERENCE_DIR, 
@@ -220,7 +227,7 @@ def check_all_examples(args):
                 ignore_styles=args.ignore_styles
             )
             
-            all_passed = formula_check and string_check and xml_check and binary_check and content_check
+            all_passed = formula_check and string_check and xml_check and binary_check and visibility_check and content_check
             
             if is_broken_example(example_name, broken_examples):
                 if all_passed:
@@ -244,6 +251,8 @@ def check_all_examples(args):
                     check_xml_content(example_name)
                     print(f"\n[{example_name}] Checking binary compatibility...")
                     check_binary_compatibility(example_name, REFERENCE_DIR)
+                    print(f"\n[{example_name}] Checking row visibility...")
+                    check_row_visibility(example_name, REFERENCE_DIR)
                     print(f"\n[{example_name}] Comparing with reference file...")
                     compare_with_reference(
                         example_name, 

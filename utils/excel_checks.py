@@ -220,4 +220,71 @@ def check_binary_compatibility(example_name, reference_dir):
     
     except Exception as e:
         print(f"[{example_name}] ❌ Error checking binary compatibility: {e}")
+        return False
+
+
+def check_row_visibility(example_name, reference_dir):
+    """Check that row visibility states match between generated and reference files"""
+    generated_file = Path(f"{example_name}.xlsx")
+    reference_file = reference_dir / f"{example_name}.xlsx"
+    
+    if not reference_file.exists():
+        print(f"[{example_name}] ⚠️ Reference file not found: {reference_file}")
+        return False
+    
+    try:
+        has_differences = False
+        
+        # Load both workbooks
+        gen_wb = openpyxl.load_workbook(generated_file)
+        ref_wb = openpyxl.load_workbook(reference_file)
+        
+        # Compare each sheet
+        for sheet_name in ref_wb.sheetnames:
+            if sheet_name not in gen_wb.sheetnames:
+                print(f"[{example_name}] ⚠️ Generated file is missing sheet: {sheet_name}")
+                has_differences = True
+                continue
+            
+            ref_sheet = ref_wb[sheet_name]
+            gen_sheet = gen_wb[sheet_name]
+            
+            # Get the maximum row number to check
+            max_row = max(ref_sheet.max_row, gen_sheet.max_row)
+            
+            # Check each row's visibility
+            for row in range(1, max_row + 1):
+                # Get row dimensions, defaulting to visible if not set
+                ref_dim = ref_sheet.row_dimensions.get(row)
+                gen_dim = gen_sheet.row_dimensions.get(row)
+                
+                ref_hidden = ref_dim.hidden if ref_dim and ref_dim.hidden is not None else False
+                gen_hidden = gen_dim.hidden if gen_dim and gen_dim.hidden is not None else False
+                
+                if ref_hidden != gen_hidden:
+                    print(f"[{example_name}] ⚠️ Row visibility mismatch in sheet '{sheet_name}' at row {row}:")
+                    print(f"  Reference: {'hidden' if ref_hidden else 'visible'}")
+                    print(f"  Generated: {'hidden' if gen_hidden else 'visible'}")
+                    has_differences = True
+                
+                # Also check row heights if they differ significantly
+                ref_height = ref_dim.height if ref_dim and ref_dim.height is not None else 15
+                gen_height = gen_dim.height if gen_dim and gen_dim.height is not None else 15
+                
+                if abs(ref_height - gen_height) > 0.1:  # Allow small floating point differences
+                    print(f"[{example_name}] ⚠️ Row height mismatch in sheet '{sheet_name}' at row {row}:")
+                    print(f"  Reference: {ref_height}")
+                    print(f"  Generated: {gen_height}")
+                    has_differences = True
+        
+        # Check for extra sheets in generated file
+        for sheet_name in gen_wb.sheetnames:
+            if sheet_name not in ref_wb.sheetnames:
+                print(f"[{example_name}] ⚠️ Generated file has extra sheet: {sheet_name}")
+                has_differences = True
+        
+        return not has_differences
+    
+    except Exception as e:
+        print(f"[{example_name}] ❌ Error checking row visibility: {e}")
         return False 

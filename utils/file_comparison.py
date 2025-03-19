@@ -7,6 +7,7 @@ from pathlib import Path
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 
+passed_autocheck_file = "autochecked"
 
 def get_relative_path(path, project_root):
     """Convert a path to be relative to the project root if possible"""
@@ -184,17 +185,17 @@ def compare_with_reference(example_name, reference_dir, results_dir, project_roo
         # Create results directory if it doesn't exist
         example_results_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create or remove excel_passing file based on results
-        excel_passing_file = example_results_dir / "excel_passing"
+        # Create or remove autochecked file based on results
+        autochecked_file = example_results_dir / passed_autocheck_file
         if not style_failure:
-            excel_passing_file.touch()
+            autochecked_file.touch()
             if not quiet:
-                print(f"✅ Created excel_passing file at {get_relative_path(excel_passing_file, project_root)}")
+                print(f"✅ Created autochecked file at {get_relative_path(autochecked_file, project_root)}")
         else:
-            if excel_passing_file.exists():
-                excel_passing_file.unlink()
+            if autochecked_file.exists():
+                autochecked_file.unlink()
             if not quiet:
-                print(f"❌ Removed excel_passing file due to differences")
+                print(f"❌ Removed autochecked file due to differences")
         
         return not style_failure
         
