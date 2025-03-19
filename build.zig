@@ -9,6 +9,12 @@ pub fn build(b: *std.Build) void {
     clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);
     clean_step.dependOn(&b.addRemoveDirTree(b.path(".zig-cache")).step);
 
+    // Add custom clean step for Excel files in the root directory
+    const clean_xlsx_step = b.addSystemCommand(&[_][]const u8{
+        "sh", "-c", "rm -f *.xlsx *.xlsm",
+    });
+    clean_step.dependOn(&clean_xlsx_step.step);
+
     const example_option = b.option(
         []const u8,
         "example",
