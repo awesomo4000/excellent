@@ -4,23 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // Add a clean step that uses std.fs operations
-    const clean_step = b.step("clean", "Clean up.");
-    clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);
-    clean_step.dependOn(&b.addRemoveDirTree(b.path(".zig-cache")).step);
-
-    // Add custom clean step for Excel files in the root directory
-    const clean_xlsx_step = b.addSystemCommand(&[_][]const u8{
-        "sh", "-c", "rm -f *.xlsx *.xlsm",
-    });
-    clean_step.dependOn(&clean_xlsx_step.step);
-
-    const example_option = b.option(
-        []const u8,
-        "example",
-        "Specify which example to run",
-    );
-
+    // Add a dependency on the xlsxwriter library
     const xlsxwriter_dep =
         b.dependency("xlsxwriter", .{
             .target = target,
@@ -37,6 +21,23 @@ pub fn build(b: *std.Build) void {
     lib_mod.addImport("xlsxwriter", xlsxwriter_dep.module(
         "xlsxwriter",
     ));
+
+    // Add a clean step that uses std.fs operations
+    const clean_step = b.step("clean", "Clean up.");
+    clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);
+    clean_step.dependOn(&b.addRemoveDirTree(b.path(".zig-cache")).step);
+
+    // Add custom clean step for Excel files in the root directory
+    const clean_xlsx_step = b.addSystemCommand(&[_][]const u8{
+        "sh", "-c", "rm -f *.xlsx *.xlsm",
+    });
+    clean_step.dependOn(&clean_xlsx_step.step);
+
+    const example_option = b.option(
+        []const u8,
+        "example",
+        "Specify which example to run",
+    );
 
     // const exe_mod = b.createModule(.{
     //     .root_source_file = b.path("src/main.zig"),
