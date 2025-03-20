@@ -406,6 +406,20 @@ pub const Chart = struct {
         _ = xlsxwriter.chart_legend_set_position(self.chart_inner, position.toNative());
     }
 
+    pub fn setTable(self: *Chart) void {
+        _ = xlsxwriter.chart_set_table(self.chart_inner);
+    }
+
+    pub fn setTableGrid(self: *Chart, horizontal: bool, vertical: bool, outline: bool, legend_keys: bool) void {
+        _ = xlsxwriter.chart_set_table_grid(
+            self.chart_inner,
+            if (horizontal) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
+            if (vertical) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
+            if (outline) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
+            if (legend_keys) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
+        );
+    }
+
     pub fn deinit(self: *Chart) void {
         // Free all series
         for (self.series.items) |series| {
