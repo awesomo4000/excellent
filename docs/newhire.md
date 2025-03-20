@@ -142,6 +142,8 @@ The manual verification process helps ensure that the generated Excel files matc
 
 - When creating new examples in the `examples/` directory, name the output Excel files without the "zig-" prefix (e.g., use "comments1.xlsx" not "zig-comments1.xlsx"). This ensures the output matches the reference files exactly. Many of the .zig examples in `testing/zig-c-binding-examples` use the "zig-examplename.xlsx" format, which is not to be used for generating examples in the high-level API examples.
 
+- When determining how to update an example to fix it, importing "xlsxwriter" is usually the wrong answer. If there are parts of "xlswriter" directly is what the wrapper API is seeking to prevent.
+
 ## Common Problems & Troubleshooting
 
 When implementing examples, you might encounter issues where your output file doesn't match the reference. Here are some common problems and solutions:
