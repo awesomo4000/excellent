@@ -141,6 +141,26 @@ pub const ChartAxis = enum {
     y_axis,
 };
 
+pub const ChartPoint = struct {
+    fill: ?*ChartFill = null,
+    line: ?*ChartLine = null,
+    native_fill: ?xlsxwriter.lxw_chart_fill = null,
+    native_line: ?xlsxwriter.lxw_chart_line = null,
+
+    fn toNative(self: *ChartPoint) xlsxwriter.lxw_chart_point {
+        if (self.fill) |f| {
+            self.native_fill = f.toNative();
+        }
+        if (self.line) |l| {
+            self.native_line = l.toNative();
+        }
+        return .{
+            .fill = if (self.native_fill) |*f| f else null,
+            .line = if (self.native_line) |*l| l else null,
+        };
+    }
+};
+
 pub const ChartSeries = struct {
     inner: *xlsxwriter.lxw_chart_series,
     allocator: std.mem.Allocator,
@@ -354,6 +374,23 @@ pub const ChartSeries = struct {
         );
     }
 
+    pub fn setPoints(self: *ChartSeries, points: []const *ChartPoint) !void {
+        var native_points = try self.allocator.alloc(?*xlsxwriter.lxw_chart_point, points.len + 1);
+        defer self.allocator.free(native_points);
+
+        var native_point_structs = try self.allocator.alloc(xlsxwriter.lxw_chart_point, points.len);
+        defer self.allocator.free(native_point_structs);
+
+        // Convert each point to native format
+        for (points, 0..) |point, i| {
+            native_point_structs[i] = point.toNative();
+            native_points[i] = &native_point_structs[i];
+        }
+        native_points[points.len] = null;
+
+        _ = xlsxwriter.chart_series_set_points(self.inner, @ptrCast(native_points.ptr));
+    }
+
     fn deinit(self: *ChartSeries) void {
         for (self.strings.items) |str| {
             var owned_str = str; // Make a mutable copy
@@ -490,6 +527,14 @@ pub const Chart = struct {
         var native_down_line = down_line.toNative();
         var native_down_fill = down_fill.toNative();
         _ = xlsxwriter.chart_set_up_down_bars_format(self.inner, &native_up_line, &native_up_fill, &native_down_line, &native_down_fill);
+    }
+
+    pub fn setRotation(self: *Chart, rotation: u16) void {
+        _ = xlsxwriter.chart_set_rotation(self.inner, rotation);
+    }
+
+    pub fn setHoleSize(self: *Chart, size: u8) void {
+        _ = xlsxwriter.chart_set_hole_size(self.inner, size);
     }
 
     pub fn deinit(self: *Chart) void {

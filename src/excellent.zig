@@ -23,6 +23,7 @@ pub const DataLabelOptions = @import("chart.zig").DataLabelOptions;
 pub const DiagonalType = @import("format.zig").DiagonalType;
 pub const CommentOptions = @import("comment.zig").CommentOptions;
 pub const TmpFile = @import("mktmp.zig").TmpFile;
+pub const chart = @import("chart.zig");
 /// Excel DateTime representation
 pub const DateTime = struct {
     year: u16 = 0,
