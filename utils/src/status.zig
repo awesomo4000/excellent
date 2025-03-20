@@ -261,13 +261,13 @@ pub fn main() !void {
         for (examples.items) |example| {
             if (std.mem.eql(u8, example.name, name)) {
                 try stdoutWriter.print(
-                    "{s: >30}  {s}  {s}  {s}  {s}\n",
+                    "{s}:{s},{s},{s},{s}\n",
                     .{
                         example.name,
-                        if (example.implemented) "[.zig]" else "",
-                        if (example.autocheck_passed) "[autochecked]" else "",
-                        if (example.verified) "[verified]" else "",
-                        if (example.have_ref_xlsx) "[ref]" else "",
+                        if (example.have_ref_xlsx) "ref" else "",
+                        if (example.implemented) "zig" else "",
+                        if (example.autocheck_passed) "autochecked" else "",
+                        if (example.verified) "verified" else "",
                     },
                 );
                 return;
@@ -295,13 +295,13 @@ pub fn main() !void {
         if (example.autocheck_passed) autocheck_passed += 1;
         if (example.have_ref_xlsx) have_ref_xlsx += 1;
         try stdoutWriter.print(
-            "{s: >30}  {s}  {s}  {s}  {s}\n",
+            "{s: >30}  {s} {s} {s} {s}\n",
             .{
                 example.name,
-                if (example.implemented) "zig" else "",
-                if (example.verified) "verf" else "",
-                if (example.autocheck_passed) "autochecked" else "",
-                if (example.have_ref_xlsx) "ref" else "",
+                if (example.implemented) "zig" else "   ",
+                if (example.verified) "verf" else "    ",
+                if (example.autocheck_passed) "autochk" else "       ",
+                if (example.have_ref_xlsx) "ref" else "   ",
             },
         );
     }
