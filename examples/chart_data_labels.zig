@@ -1,7 +1,6 @@
 const std = @import("std");
 const excel = @import("excellent");
-const xlsxwriter = @import("xlsxwriter");
-
+const colors = excel.Colors;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) {
@@ -101,7 +100,7 @@ pub fn main() !void {
     try series3.setDataLabelFont(.{
         .name = "Arial",
         .bold = true,
-        .color = excel.Colors.RED,
+        .color = colors.red,
         .rotation = -30,
     });
 
@@ -123,10 +122,10 @@ pub fn main() !void {
     // Add data labels with border/line and fill
     try series4.enableDataLabels();
     try series4.setDataLabelLine(.{
-        .color = excel.Colors.RED,
+        .color = colors.red,
         .width = 0.75,
     });
-    try series4.setDataLabelFill(.{ .color = excel.Colors.YELLOW });
+    try series4.setDataLabelFill(.{ .color = colors.yellow });
 
     // Turn off the legend
     chart4.setLegendPosition(.none);
@@ -207,7 +206,7 @@ pub fn main() !void {
     // Create custom font
     const red_font = excel.ChartFont{
         .name = "Arial",
-        .color = excel.Colors.RED,
+        .color = colors.red,
     };
 
     // Add mixed custom data labels
@@ -268,22 +267,22 @@ pub fn main() !void {
 
     // Set default formatting for all labels
     try series9.setDataLabelLine(.{
-        .color = excel.Colors.RED,
+        .color = colors.red,
         .width = 0.75,
     });
-    try series9.setDataLabelFill(.{ .color = excel.Colors.YELLOW });
+    try series9.setDataLabelFill(.{ .color = colors.yellow });
 
     // Add custom data labels with custom formatting that overrides defaults
     try series9.setCustomDataLabels(&[_]?excel.ChartDataLabel{
         .{ .value = "Amy", .line = .{
-            .color = excel.Colors.BLUE,
+            .color = colors.blue,
             .width = 0.75,
         } },
         .{ .value = "Bea" },
         .{ .value = "Eva" },
         .{ .value = "Fay" },
         .{ .value = "Liv" },
-        .{ .value = "Una", .fill = .{ .color = excel.Colors.GREEN } },
+        .{ .value = "Una", .fill = .{ .color = colors.green } },
         null,
     });
 

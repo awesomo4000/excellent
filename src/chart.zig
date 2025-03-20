@@ -1,25 +1,6 @@
 const std = @import("std");
 const xlsxwriter = @import("xlsxwriter");
-
-// Export colors for easy use
-pub const Colors = struct {
-    pub const BLACK: u32 = xlsxwriter.LXW_COLOR_BLACK;
-    pub const BLUE: u32 = xlsxwriter.LXW_COLOR_BLUE;
-    pub const BROWN: u32 = xlsxwriter.LXW_COLOR_BROWN;
-    pub const CYAN: u32 = xlsxwriter.LXW_COLOR_CYAN;
-    pub const GRAY: u32 = xlsxwriter.LXW_COLOR_GRAY;
-    pub const GREEN: u32 = xlsxwriter.LXW_COLOR_GREEN;
-    pub const LIME: u32 = xlsxwriter.LXW_COLOR_LIME;
-    pub const MAGENTA: u32 = xlsxwriter.LXW_COLOR_MAGENTA;
-    pub const NAVY: u32 = xlsxwriter.LXW_COLOR_NAVY;
-    pub const ORANGE: u32 = xlsxwriter.LXW_COLOR_ORANGE;
-    pub const PINK: u32 = xlsxwriter.LXW_COLOR_PINK;
-    pub const PURPLE: u32 = xlsxwriter.LXW_COLOR_PURPLE;
-    pub const RED: u32 = xlsxwriter.LXW_COLOR_RED;
-    pub const SILVER: u32 = xlsxwriter.LXW_COLOR_SILVER;
-    pub const WHITE: u32 = xlsxwriter.LXW_COLOR_WHITE;
-    pub const YELLOW: u32 = xlsxwriter.LXW_COLOR_YELLOW;
-};
+const Colors = @import("colors.zig").Colors;
 
 pub const ChartType = enum {
     column,
@@ -62,7 +43,7 @@ pub const ChartFont = struct {
     size: f64 = 10.0,
     bold: bool = false,
     italic: bool = false,
-    color: u32 = xlsxwriter.LXW_COLOR_BLACK,
+    color: Colors = Colors.black,
     rotation: i16 = 0,
 
     fn toNative(self: ChartFont) xlsxwriter.lxw_chart_font {
@@ -82,15 +63,22 @@ pub const ChartFont = struct {
 };
 
 pub const ChartLine = struct {
-    color: u32 = xlsxwriter.LXW_COLOR_BLACK,
-    width: f32 = 2.25,
-    dash_type: u8 = xlsxwriter.LXW_CHART_LINE_DASH_SOLID,
+    color: u32 = Colors.black,
+    width: f32 = 0.75,
+    dash_type: DashType = .solid,
+
+    pub const DashType = enum(u8) {
+        solid = xlsxwriter.LXW_CHART_LINE_DASH_SOLID,
+        dot = xlsxwriter.LXW_CHART_LINE_DASH_DOT,
+        dash = xlsxwriter.LXW_CHART_LINE_DASH_DASH,
+        long_dash = xlsxwriter.LXW_CHART_LINE_DASH_LONG_DASH,
+    };
 
     fn toNative(self: ChartLine) xlsxwriter.lxw_chart_line {
         return .{
             .color = self.color,
             .width = self.width,
-            .dash_type = self.dash_type,
+            .dash_type = @intFromEnum(self.dash_type),
             .transparency = 0,
             .none = 0,
         };
@@ -98,7 +86,7 @@ pub const ChartLine = struct {
 };
 
 pub const ChartFill = struct {
-    color: u32 = xlsxwriter.LXW_COLOR_BLACK,
+    color: u32 = Colors.black,
     transparency: u8 = 0,
 
     fn toNative(self: ChartFill) xlsxwriter.lxw_chart_fill {
@@ -311,6 +299,61 @@ pub const ChartSeries = struct {
         _ = xlsxwriter.chart_series_set_labels_custom(self.inner, &native_labels[0]);
     }
 
+    pub const TrendlineType = enum(u8) {
+        linear = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_LINEAR,
+        poly = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_POLY,
+        log = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_LOG,
+        exp = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_EXP,
+        power = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_POWER,
+        moving_average = xlsxwriter.LXW_CHART_TRENDLINE_TYPE_AVERAGE,
+    };
+
+    pub fn setTrendline(self: *ChartSeries, trendline_type: TrendlineType, order: u8) !void {
+        _ = xlsxwriter.chart_series_set_trendline(self.inner, @intFromEnum(trendline_type), order);
+    }
+
+    pub fn setTrendlineLine(self: *ChartSeries, line: *ChartLine) !void {
+        var native_line = line.toNative();
+        _ = xlsxwriter.chart_series_set_trendline_line(self.inner, &native_line);
+    }
+
+    pub const MarkerType = enum(u8) {
+        automatic = xlsxwriter.LXW_CHART_MARKER_AUTOMATIC,
+        none = xlsxwriter.LXW_CHART_MARKER_NONE,
+        square = xlsxwriter.LXW_CHART_MARKER_SQUARE,
+        diamond = xlsxwriter.LXW_CHART_MARKER_DIAMOND,
+        triangle = xlsxwriter.LXW_CHART_MARKER_TRIANGLE,
+        x = xlsxwriter.LXW_CHART_MARKER_X,
+        star = xlsxwriter.LXW_CHART_MARKER_STAR,
+        short_dash = xlsxwriter.LXW_CHART_MARKER_SHORT_DASH,
+        long_dash = xlsxwriter.LXW_CHART_MARKER_LONG_DASH,
+        circle = xlsxwriter.LXW_CHART_MARKER_CIRCLE,
+        plus = xlsxwriter.LXW_CHART_MARKER_PLUS,
+    };
+
+    pub const ErrorBarType = enum(u8) {
+        std_error = xlsxwriter.LXW_CHART_ERROR_BAR_TYPE_STD_ERROR,
+        fixed = xlsxwriter.LXW_CHART_ERROR_BAR_TYPE_FIXED,
+        percentage = xlsxwriter.LXW_CHART_ERROR_BAR_TYPE_PERCENTAGE,
+        std_dev = xlsxwriter.LXW_CHART_ERROR_BAR_TYPE_STD_DEV,
+    };
+
+    pub fn setMarkerType(self: *ChartSeries, marker_type: MarkerType) !void {
+        _ = xlsxwriter.chart_series_set_marker_type(self.inner, @intFromEnum(marker_type));
+    }
+
+    pub fn setLabels(self: *ChartSeries) !void {
+        _ = xlsxwriter.chart_series_set_labels(self.inner);
+    }
+
+    pub fn setErrorBars(self: *ChartSeries, error_bar_type: ErrorBarType, value: f64) !void {
+        _ = xlsxwriter.chart_series_set_error_bars(
+            self.inner.y_error_bars,
+            @intFromEnum(error_bar_type),
+            value,
+        );
+    }
+
     fn deinit(self: *ChartSeries) void {
         for (self.strings.items) |str| {
             var owned_str = str; // Make a mutable copy
@@ -322,21 +365,20 @@ pub const ChartSeries = struct {
 };
 
 pub const Chart = struct {
+    inner: *xlsxwriter.lxw_chart,
     allocator: std.mem.Allocator,
     series: std.ArrayList(*ChartSeries),
     series_strings: std.ArrayList([]const u8),
-    // Inner C object, but not exposed in the public API
-    chart_inner: *xlsxwriter.lxw_chart,
 
     pub fn init(allocator: std.mem.Allocator, workbook: *xlsxwriter.lxw_workbook, chart_type: ChartType) !Chart {
         const inner = xlsxwriter.workbook_add_chart(workbook, chart_type.toNative()) orelse {
             return error.ChartCreationFailed;
         };
         return Chart{
+            .inner = inner,
             .allocator = allocator,
             .series = std.ArrayList(*ChartSeries).init(allocator),
             .series_strings = std.ArrayList([]const u8).init(allocator),
-            .chart_inner = inner,
         };
     }
 
@@ -355,7 +397,7 @@ pub const Chart = struct {
             break :blk str;
         } else null;
 
-        const series_inner = xlsxwriter.chart_add_series(self.chart_inner, if (cat_ptr) |c| @ptrCast(c) else null, if (val_ptr) |v| @ptrCast(v) else null);
+        const series_inner = xlsxwriter.chart_add_series(self.inner, if (cat_ptr) |c| @ptrCast(c) else null, if (val_ptr) |v| @ptrCast(v) else null);
 
         const series = try self.allocator.create(ChartSeries);
         series.* = .{
@@ -372,12 +414,12 @@ pub const Chart = struct {
         const title_str = try self.allocator.dupeZ(u8, title);
         errdefer self.allocator.free(title_str);
         try self.series_strings.append(title_str[0..title_str.len]); // Store without null terminator
-        _ = xlsxwriter.chart_title_set_name(self.chart_inner, title_str);
+        _ = xlsxwriter.chart_title_set_name(self.inner, title_str);
     }
 
     pub fn setTitleFont(self: *Chart, font: ChartFont) void {
         var native_font = font.toNative();
-        _ = xlsxwriter.chart_title_set_name_font(self.chart_inner, &native_font);
+        _ = xlsxwriter.chart_title_set_name_font(self.inner, &native_font);
     }
 
     pub fn setXAxisName(self: *Chart, name: []const u8) !void {
@@ -392,32 +434,62 @@ pub const Chart = struct {
         const name_str = try self.allocator.dupeZ(u8, name);
         try self.series_strings.append(name_str[0..name_str.len]); // Store without null terminator
         const axis_ptr = switch (axis) {
-            .x_axis => self.chart_inner.x_axis,
-            .y_axis => self.chart_inner.y_axis,
+            .x_axis => self.inner.x_axis,
+            .y_axis => self.inner.y_axis,
         };
         _ = xlsxwriter.chart_axis_set_name(axis_ptr, name_str);
     }
 
     pub fn setStyle(self: *Chart, style_id: u8) void {
-        _ = xlsxwriter.chart_set_style(self.chart_inner, style_id);
+        _ = xlsxwriter.chart_set_style(self.inner, style_id);
     }
 
     pub fn setLegendPosition(self: *Chart, position: ChartLegendPosition) void {
-        _ = xlsxwriter.chart_legend_set_position(self.chart_inner, position.toNative());
+        _ = xlsxwriter.chart_legend_set_position(self.inner, position.toNative());
     }
 
     pub fn setTable(self: *Chart) void {
-        _ = xlsxwriter.chart_set_table(self.chart_inner);
+        _ = xlsxwriter.chart_set_table(self.inner);
     }
 
     pub fn setTableGrid(self: *Chart, horizontal: bool, vertical: bool, outline: bool, legend_keys: bool) void {
         _ = xlsxwriter.chart_set_table_grid(
-            self.chart_inner,
+            self.inner,
             if (horizontal) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
             if (vertical) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
             if (outline) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
             if (legend_keys) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
         );
+    }
+
+    pub fn setHighLowLines(self: *Chart, line: ?*ChartLine) !void {
+        if (line) |l| {
+            var native_line = l.toNative();
+            _ = xlsxwriter.chart_set_high_low_lines(self.inner, &native_line);
+        } else {
+            _ = xlsxwriter.chart_set_high_low_lines(self.inner, null);
+        }
+    }
+
+    pub fn setDropLines(self: *Chart, line: ?*ChartLine) !void {
+        if (line) |l| {
+            var native_line = l.toNative();
+            _ = xlsxwriter.chart_set_drop_lines(self.inner, &native_line);
+        } else {
+            _ = xlsxwriter.chart_set_drop_lines(self.inner, null);
+        }
+    }
+
+    pub fn setUpDownBars(self: *Chart) !void {
+        _ = xlsxwriter.chart_set_up_down_bars(self.inner);
+    }
+
+    pub fn setUpDownBarsFormat(self: *Chart, up_line: *ChartLine, up_fill: *ChartFill, down_line: *ChartLine, down_fill: *ChartFill) !void {
+        var native_up_line = up_line.toNative();
+        var native_up_fill = up_fill.toNative();
+        var native_down_line = down_line.toNative();
+        var native_down_fill = down_fill.toNative();
+        _ = xlsxwriter.chart_set_up_down_bars_format(self.inner, &native_up_line, &native_up_fill, &native_down_line, &native_down_fill);
     }
 
     pub fn deinit(self: *Chart) void {
@@ -437,6 +509,6 @@ pub const Chart = struct {
         self.series_strings.deinit();
 
         // The chart object itself is cleaned up when the workbook is closed
-        self.chart_inner = undefined;
+        self.inner = undefined;
     }
 };

@@ -451,9 +451,9 @@ pub const Worksheet = struct {
             self.worksheet,
             @intCast(row),
             @intCast(col),
-            chart_obj.chart_inner,
+            chart_obj.inner,
         );
-        if (result != c.LXW_NO_ERROR) return error.ChartInsertFailed;
+        if (result != c.LXW_NO_ERROR) return error.InsertChartFailed;
     }
 
     /// Chart options for chart positioning
