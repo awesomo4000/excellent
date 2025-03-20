@@ -2,10 +2,11 @@
 
 > **Note**: This document is a guide for the AI assistant to understand the project structure and workflow. When starting fresh, this document will help the assistant provide consistent and accurate assistance.
 
-You are writing Zig code. The code produced will provide a high-level, user-friendly ergonomic, and idiomatic API for the production of Excel spreadsheet (.xlsx files).
+You are writing Zig code to provide a high-level, user-friendly ergonomic, and idiomatic API for the production of Excel spreadsheet (.xlsx files).
 The high-level API is a wrapper around a lower-level zig binding to a C library, libxlsxwriter. The example programs for this binding will be referred to for conversion into the high-level API.
 
 ## Overview
+
 Your task is to create a high-level API that makes Excel file generation simple and intuitive in Zig. You'll do this by:
 
 1. Studying the low-level bindings in `testing/zig-c-binding-examples/`
@@ -18,11 +19,11 @@ Directories in the project are:
 
 **src/**  : High-level interface wrapper code
 
-**examples/** : Being populated with examples using the new highlevel wrappers being developed. Each example from testing/zig-c-binding-examples/ should be represented by a corresponding example in this directory.
+**examples/** : Being populated with examples using the new highlevel wrappers being developed (in src/). Each example from `testing/zig-c-binding-examples/` should be represented by a corresponding example in this directory. These are also representative of the examples written in the C language (in `testing/c-examples/`). Both should be referred to when developing wrapper examples based on them.
 
-**testing/**  : Files and programs useful for testing and verification
+**testing/**  : Files and programs used for testing and verification
 
-**testing/reference-xls/*.xlsx** : Reference xlsx files that are to be compared to the output generated from the high-level wrappers being developed
+**testing/reference-xls/*.xlsx** : Reference xlsx files that are to be compared to the output generated from the high-level wrappers being developed.
 
 **testing/test-output-xls** : Output directory to place verified outputs from examples/*.zig after testing them to make sure they produce correct output
 
@@ -45,22 +46,22 @@ Follow this cycle:
 
 1. Check what needs to be done:
 ```bash
-zig build status          # full detailed view
-zig build status -- --short  # compact view of implemented/verified examples
+./utils/status          # full detailed view
+
+./utils/status --short  # compact view of implemented/verified examples
 ```
 
 2. Check status of a specific example:
 ```bash
-zig build status -- hello
-```
-
-3. Verify your work:
-```bash
-zig build run verify -- hello
+./utils/status hello
 ```
 
 ### Automated Excel Checking
-Before submitting an example for manual verification, use the `autocheck.py` script to catch common issues:
+
+Before submitting an example for manual verification, use the `autocheck.py` script to catch common issues. This command
+should also be run to iterate when developing an example, since
+it will show compile errors while developing the code, and
+run the autocheck.py if it passes compilation.
 
 ```bash
 python3 utils/autocheck.py tutorial1 --build --run
@@ -74,10 +75,6 @@ This script performs several checks on the generated Excel file:
 4. **Binary compatibility**: Compares file structure with the reference file
 5. **Content comparison**: Verifies cell contents match the reference file
 
-The script requires the `openpyxl` Python package:
-```bash
-pip install openpyxl
-```
 
 Common usage patterns:
 ```bash
@@ -100,6 +97,7 @@ python3 utils/autocheck.py example_name --ignore-styles
 Using this tool before manual verification saves time by catching technical issues early, allowing you to fix problems before asking a human to verify the visual appearance.
 
 ### Manual Verification Process
+
 The manual verification process helps ensure that the generated Excel files match the reference files:
 
 1. Run the verifier:
@@ -116,9 +114,10 @@ The manual verification process helps ensure that the generated Excel files matc
      - `comparison_hello.png` (screenshot)
      - `hello_output.txt` (verification result)
 
-3. The status program (`zig build status`) checks for the presence of the output.txt file in the results directory to determine if an example is verified.
+3. The status program (`./utils/status`) checks for the presence of `testing/results/{example_name}/verified` file in the results directory to determine if an example is verified.
 
 4. If you need to unverify examples after API changes, use the unverify.py script:
+
 ```bash
 # Unverify a specific example
 ./utils/unverify.py hello
@@ -132,20 +131,11 @@ The manual verification process helps ensure that the generated Excel files matc
 
 ## Coding Standards
 
-- Use comma (,) after the last parameter in function definitions, struct
-  definitions, function calls, etc. so the zig formatter will wrap lines
-  and keep the line width less than 80 characters. You can also put a
-  newline (\n) character after the '=' in an assignment, and zig will
-  move the right side to the next line, and still understand the syntax.
-  This is a good way to also shorten line width if needed.
+- Use comma (,) after the last parameter in function definitions, struct definitions, function calls, etc. so the zig formatter will wrap lines and keep the line width less than 80 characters. You can also put a newline (\n) character after the '=' in an assignment, and zig will move the right side to the next line, and still understand the syntax. This is a good way to also shorten line width if needed.
 
-- Refactor common functionality so functions are short while maintaining
-  the user-friendliness for the public API calls
+- Refactor common functionality so functions are short while maintaining the user-friendliness for the public API calls
 
-- When creating new examples in the `examples/` directory, name the output
-  Excel files without the "zig-" prefix (e.g., use "comments1.xlsx" not
-  "zig-comments1.xlsx"). This ensures the output matches the reference
-  files exactly.
+- When creating new examples in the `examples/` directory, name the output Excel files without the "zig-" prefix (e.g., use "comments1.xlsx" not "zig-comments1.xlsx"). This ensures the output matches the reference files exactly. Many of the .zig examples in `testing/zig-c-binding-examples` use the "zig-examplename.xlsx" format, which is not to be used for generating examples in the high-level API examples.
 
 ## Common Problems & Troubleshooting
 
@@ -242,6 +232,7 @@ try worksheet.filterColumn(0, .{
 ### Verification Strategy
 
 If verification fails:
+
 1. Compare your implementation with the reference example line by line
 2. Run the autocheck.py script to identify technical issues
 3. Use verify.py to see exactly what's different visually
@@ -252,7 +243,8 @@ Remember that the goal is binary compatibility with the reference files, not jus
 
 ## Unit Testing
 
-### Test Organization
+### Unit Test Organization for `zig build test` runs
+
 The project follows a strict test organization pattern:
 
 1. Each API implementation file in `src/` has a corresponding test file prefixed with `test_`. For example:
@@ -278,7 +270,7 @@ To run the unit tests:
 # Run all tests
 zig build test
 
-# Run a specific test file directly
+# Run a specific test file directly *todo*
 zig test src/test_worksheet.zig
 
 # Run tests with verbose output
