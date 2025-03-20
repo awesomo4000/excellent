@@ -9,4 +9,4 @@ x/
 coverage/
 kcov-output/
 .DS_Store
-testing/
+testing/results/
