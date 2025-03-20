@@ -22,6 +22,12 @@ pub fn build(b: *std.Build) void {
         "xlsxwriter",
     ));
 
+    const mktmp_mod = b.createModule(.{
+        .root_source_file = b.path("src/mktmp.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    lib_mod.addImport("mktmp", mktmp_mod);
     // Add a clean step that uses std.fs operations
     const clean_step = b.step("clean", "Clean up.");
     clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);

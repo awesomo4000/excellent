@@ -17,7 +17,7 @@ pub const ChartType = @import("chart.zig").ChartType;
 pub const ChartFont = @import("chart.zig").ChartFont;
 pub const DiagonalType = @import("format.zig").DiagonalType;
 pub const CommentOptions = @import("comment.zig").CommentOptions;
-
+pub const TmpFile = @import("mktmp.zig").TmpFile;
 /// Excel DateTime representation
 pub const DateTime = struct {
     year: u16 = 0,
