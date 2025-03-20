@@ -10,3 +10,5 @@ coverage/
 kcov-output/
 .DS_Store
 testing/results/
+*.xlsx
+*.xlsm
