@@ -667,4 +667,24 @@ pub const Worksheet = struct {
     pub fn hideComments(self: *Worksheet) void {
         _ = c.worksheet_hide_comments(self.worksheet);
     }
+
+    /// Insert an image into the worksheet at the specified position
+    pub fn insertImage(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        filename: []const u8,
+    ) !void {
+        // Ensure filename is null-terminated
+        const null_term_filename = try self.workbook.allocator.dupeZ(u8, filename);
+        defer self.workbook.allocator.free(null_term_filename);
+
+        const result = c.worksheet_insert_image(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            null_term_filename.ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.InsertImageFailed;
+    }
 };
