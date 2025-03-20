@@ -130,12 +130,21 @@ fn setupExamples(
                 defer allocator.free(ref_path);
                 break :blk fs.cwd().access(ref_path, .{}) != error.FileNotFound;
             };
+            const have_ref_xlsm = blk: {
+                const ref_path = try std.fmt.allocPrint(
+                    allocator,
+                    "testing/reference-xls/{s}.xlsm",
+                    .{name},
+                );
+                defer allocator.free(ref_path);
+                break :blk fs.cwd().access(ref_path, .{}) != error.FileNotFound;
+            };
             try examples.append(.{
                 .name = name,
                 .implemented = implemented,
                 .verified = verified,
                 .autocheck_passed = autocheck_passed,
-                .have_ref_xlsx = have_ref_xlsx,
+                .have_ref_xlsx = have_ref_xlsx or have_ref_xlsm,
             });
         }
     }
@@ -306,24 +315,31 @@ pub fn main() !void {
         );
     }
     try stdoutWriter.print(
-        "\nProgress: {d}/{d} examples started ({d:.1}%), {d}/{d} autochecked ({d:.1}%), {d}/{d} verified ({d:.1}%), {d}/{d} have ref ({d:.1}%)\n",
+        "\n+\n" ++
+            "+        zig  {d}/{d} ({d:.1}%)\n" ++
+            "+  autocheck  {d}/{d} ({d:.1}%)\n" ++
+            "+   verified  {d}/{d} ({d:.1}%)\n" ++
+            "+    haveref  {d}/{d} ({d:.1}%)\n",
         .{
             implemented,
             examples.items.len,
-            @as(f64, @floatFromInt(implemented)) /
-                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            percent(implemented, examples.items.len),
             autocheck_passed,
             examples.items.len,
-            @as(f64, @floatFromInt(autocheck_passed)) /
-                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            percent(autocheck_passed, examples.items.len),
             verified,
             examples.items.len,
-            @as(f64, @floatFromInt(verified)) /
-                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            percent(verified, examples.items.len),
             have_ref_xlsx,
             examples.items.len,
-            @as(f64, @floatFromInt(have_ref_xlsx)) /
-                @as(f64, @floatFromInt(examples.items.len)) * 100.0,
+            percent(have_ref_xlsx, examples.items.len),
         },
     );
+}
+
+fn percent(
+    numerator: usize,
+    denominator: usize,
+) f64 {
+    return @as(f64, @floatFromInt(numerator)) / @as(f64, @floatFromInt(denominator)) * 100.0;
 }
