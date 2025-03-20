@@ -21,16 +21,22 @@ def get_relative_path(path, project_root):
 def compare_with_reference(example_name, reference_dir, results_dir, project_root, quiet=False, ignore_styles=False):
     """Compare generated Excel file with reference file"""
     generated_file = Path(f"{example_name}.xlsx")
+    generated_macro_file = Path(f"{example_name}.xlsm")
     reference_file = reference_dir / f"{example_name}.xlsx"
+    reference_macro_file = reference_dir / f"{example_name}.xlsm"
     example_results_dir = results_dir / example_name
     
-    if not reference_file.exists():
-        print(f"⚠️ Reference file not found: {get_relative_path(reference_file, project_root)}")
+    # Use the macro files if they exist, otherwise use the regular files
+    file_to_check = generated_macro_file if generated_macro_file.exists() else generated_file
+    ref_to_check = reference_macro_file if reference_macro_file.exists() else reference_file
+    
+    if not ref_to_check.exists():
+        print(f"⚠️ Reference file not found: {get_relative_path(ref_to_check, project_root)}")
         return False
     
     try:
-        gen_wb = openpyxl.load_workbook(generated_file)
-        ref_wb = openpyxl.load_workbook(reference_file)
+        gen_wb = openpyxl.load_workbook(file_to_check)
+        ref_wb = openpyxl.load_workbook(ref_to_check)
         
         # Compare sheet names
         if gen_wb.sheetnames != ref_wb.sheetnames:

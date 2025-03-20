@@ -51,11 +51,15 @@ def run_example(example_name, project_root, quiet=False):
         print(result.stderr)
         return False
     
+    # Check for both .xlsx and .xlsm files
     generated_file = Path(f"{example_name}.xlsx")
-    if not generated_file.exists():
-        print(f"❌ Excel file not generated: {generated_file}")
+    generated_macro_file = Path(f"{example_name}.xlsm")
+    
+    if not generated_file.exists() and not generated_macro_file.exists():
+        print(f"❌ Excel file not generated: {generated_file} or {generated_macro_file}")
         return False
     
     if not quiet:
-        print(f"✅ Excel file generated: {generated_file}")
+        file_to_report = generated_macro_file if generated_macro_file.exists() else generated_file
+        print(f"✅ Excel file generated: {file_to_report}")
     return True 

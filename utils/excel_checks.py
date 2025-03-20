@@ -91,11 +91,15 @@ def check_string_null_termination(workbook, example_name=None):
 
 
 def check_xml_content(example_name):
-    """Check the XML content of the xlsx file for encoding issues in memory"""
+    """Check the XML content of the xlsx/xlsm file for encoding issues in memory"""
     generated_file = Path(f"{example_name}.xlsx")
+    generated_macro_file = Path(f"{example_name}.xlsm")
+    
+    # Use the macro file if it exists, otherwise use the regular file
+    file_to_check = generated_macro_file if generated_macro_file.exists() else generated_file
     
     try:
-        with zipfile.ZipFile(generated_file, 'r') as xlsx_zip:
+        with zipfile.ZipFile(file_to_check, 'r') as xlsx_zip:
             # Get list of all XML files in the workbook
             sheet_files = [name for name in xlsx_zip.namelist() 
                          if name.startswith('xl/worksheets/sheet') and name.endswith('.xml')]
@@ -170,18 +174,24 @@ def check_xml_content(example_name):
 def check_binary_compatibility(example_name, reference_dir):
     """Check for binary compatibility issues that might not be visible in the content"""
     generated_file = Path(f"{example_name}.xlsx")
+    generated_macro_file = Path(f"{example_name}.xlsm")
     reference_file = reference_dir / f"{example_name}.xlsx"
+    reference_macro_file = reference_dir / f"{example_name}.xlsm"
     
-    if not reference_file.exists():
-        print(f"[{example_name}] ⚠️ Reference file not found: {reference_file}")
+    # Use the macro files if they exist, otherwise use the regular files
+    file_to_check = generated_macro_file if generated_macro_file.exists() else generated_file
+    ref_to_check = reference_macro_file if reference_macro_file.exists() else reference_file
+    
+    if not ref_to_check.exists():
+        print(f"[{example_name}] ⚠️ Reference file not found: {ref_to_check}")
         return False
     
     try:
         has_differences = False
         
         # Compare file sizes - significant differences might indicate issues
-        gen_size = generated_file.stat().st_size
-        ref_size = reference_file.stat().st_size
+        gen_size = file_to_check.stat().st_size
+        ref_size = ref_to_check.stat().st_size
         size_diff_percent = abs(gen_size - ref_size) / max(gen_size, ref_size) * 100
         
         if size_diff_percent > 10:  # More than 10% size difference
@@ -189,7 +199,7 @@ def check_binary_compatibility(example_name, reference_dir):
             has_differences = True
         
         # Check internal file structure using zipfile
-        with zipfile.ZipFile(generated_file, 'r') as gen_zip, zipfile.ZipFile(reference_file, 'r') as ref_zip:
+        with zipfile.ZipFile(file_to_check, 'r') as gen_zip, zipfile.ZipFile(ref_to_check, 'r') as ref_zip:
             gen_files = set(gen_zip.namelist())
             ref_files = set(ref_zip.namelist())
             
@@ -226,18 +236,24 @@ def check_binary_compatibility(example_name, reference_dir):
 def check_row_visibility(example_name, reference_dir):
     """Check that row visibility states match between generated and reference files"""
     generated_file = Path(f"{example_name}.xlsx")
+    generated_macro_file = Path(f"{example_name}.xlsm")
     reference_file = reference_dir / f"{example_name}.xlsx"
+    reference_macro_file = reference_dir / f"{example_name}.xlsm"
     
-    if not reference_file.exists():
-        print(f"[{example_name}] ⚠️ Reference file not found: {reference_file}")
+    # Use the macro files if they exist, otherwise use the regular files
+    file_to_check = generated_macro_file if generated_macro_file.exists() else generated_file
+    ref_to_check = reference_macro_file if reference_macro_file.exists() else reference_file
+    
+    if not ref_to_check.exists():
+        print(f"[{example_name}] ⚠️ Reference file not found: {ref_to_check}")
         return False
     
     try:
         has_differences = False
         
         # Load both workbooks
-        gen_wb = openpyxl.load_workbook(generated_file)
-        ref_wb = openpyxl.load_workbook(reference_file)
+        gen_wb = openpyxl.load_workbook(file_to_check)
+        ref_wb = openpyxl.load_workbook(ref_to_check)
         
         # Compare each sheet
         for sheet_name in ref_wb.sheetnames:

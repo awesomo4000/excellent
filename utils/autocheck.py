@@ -108,10 +108,14 @@ def check_single_example(example_name, args):
     
     # Look for the Excel file
     excel_file = Path(f"{example_name}.xlsx")
-    if not excel_file.exists():
-        print(f"❌ Excel file not found: {excel_file}")
+    excel_macro_file = Path(f"{example_name}.xlsm")
+    if not excel_file.exists() and not excel_macro_file.exists():
+        print(f"❌ Excel file not found: {excel_file} or {excel_macro_file}")
         print("Run with --run option to generate it")
         return is_broken  # Return success for broken examples
+    
+    # Use the macro file if it exists, otherwise use the regular file
+    excel_file = excel_macro_file if excel_macro_file.exists() else excel_file
     
     print(f"\n=== Checking Excel file: {excel_file} ===\n")
     
@@ -220,7 +224,8 @@ def check_all_examples(args):
         if not (args.build and not args.run):
             # Check the Excel file
             excel_file = Path(f"{example_name}.xlsx")
-            if not excel_file.exists():
+            excel_macro_file = Path(f"{example_name}.xlsm")
+            if not excel_file.exists() and not excel_macro_file.exists():
                 if is_broken_example(example_name, broken_examples):
                     print(f"{example_name} [BROKEN] ✅ Excel file not generated as expected")
                     continue
@@ -228,8 +233,10 @@ def check_all_examples(args):
                 continue
             
             try:
+                # Use the macro file if it exists, otherwise use the regular file
+                file_to_check = excel_macro_file if excel_macro_file.exists() else excel_file
                 # Load workbook for checks
-                workbook = openpyxl.load_workbook(excel_file)
+                workbook = openpyxl.load_workbook(file_to_check)
                 
                 # Run checks
                 formula_check = check_formulas(workbook, example_name)

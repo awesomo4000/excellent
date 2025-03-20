@@ -174,10 +174,11 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
         return False
     
     # Determine the Excel file path - look for the file in the project root
-    excel_file = root_dir / f"{example_name}.xlsx"
+    extension = ".xlsm" if example_name == "macro" else ".xlsx"
+    excel_file = root_dir / f"{example_name}{extension}"
     
     if not excel_file.exists():
-        print(f"Excel file not found: {example_name}.xlsx")
+        print(f"Excel file not found: {example_name}{extension}")
         return False
     
     # Wait for the file to be fully written
@@ -266,7 +267,7 @@ def take_screenshot(example_name, top_crop=25, bottom_crop=155, left_crop=0, rig
         result_file = results_dir / f"{example_name}_output.txt"
         with open(result_file, 'w') as f:
             f.write(f"Verification of {example_name} example:\n")
-            f.write(f"Excel file: testing/results/{example_name}/{example_name}.xlsx\n")
+            f.write(f"Excel file: testing/results/{example_name}/{example_name}{extension}\n")
             f.write(f"Screenshot: {relative_screenshot_path}\n\n")
             
             if user_input == 'y':
