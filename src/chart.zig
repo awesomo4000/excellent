@@ -43,7 +43,7 @@ pub const ChartFont = struct {
     size: f64 = 10.0,
     bold: bool = false,
     italic: bool = false,
-    color: Colors = Colors.black,
+    color: u32 = Colors.black,
     rotation: i16 = 0,
 
     fn toNative(self: ChartFont) xlsxwriter.lxw_chart_font {

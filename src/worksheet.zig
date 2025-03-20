@@ -483,7 +483,7 @@ pub const Worksheet = struct {
             self.worksheet,
             @intCast(row),
             @intCast(col),
-            chart_obj.chart_inner,
+            chart_obj.inner,
             &c_options,
         );
         if (result != c.LXW_NO_ERROR) return error.ChartInsertFailed;
