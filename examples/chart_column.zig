@@ -43,72 +43,62 @@ pub fn main() !void {
     try writeWorksheetData(&worksheet, bold);
 
     // Chart 1: Create a column chart.
-    var chart = try Chart.init(allocator, workbook.workbook, .column);
+    var chart1 = try workbook.addChart(.column);
 
-    // Add the first series to the chart.
-    try chart.addSeries("=Sheet1!$A$2:$A$7", "=Sheet1!$B$2:$B$7");
-    try chart.setSeriesName(0, "=Sheet1!$B$1");
+    // Add the first series
+    _ = try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
 
-    // Add a second series but leave the categories and values undefined.
-    try chart.addSeries(null, null);
-
-    // Configure the series using a syntax that is easier to define programmatically.
-    try chart.setSeriesCategories(1, "Sheet1", 1, 0, 6, 0); // "=Sheet1!$A$2:$A$7"
-    try chart.setSeriesValues(1, "Sheet1", 1, 2, 6, 2); // "=Sheet1!$C$2:$C$7"
-    try chart.setSeriesNameRange(1, "Sheet1", 0, 2); // "=Sheet1!$C$1"
+    // Add the second series
+    _ = try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
 
     // Add a chart title and some axis labels.
-    try chart.setTitle("Results of sample analysis");
-    try chart.setAxisName(.x_axis, "Test number");
-    try chart.setAxisName(.y_axis, "Sample length (mm)");
+    try chart1.setTitle("Results of sample analysis");
+    try chart1.setAxisName(.x_axis, "Test number");
+    try chart1.setAxisName(.y_axis, "Sample length (mm)");
 
     // Set an Excel chart style.
-    chart.setStyle(11);
+    chart1.setStyle(11);
 
     // Insert the chart into the worksheet.
-    try worksheet.insertChart(1, 4, chart);
+    try worksheet.insertChart(1, 4, chart1);
 
     // Chart 2: Create a stacked column chart.
-    chart = try Chart.init(allocator, workbook.workbook, .column_stacked);
+    var chart2 = try workbook.addChart(.column_stacked);
 
-    // Add the first series to the chart.
-    try chart.addSeries("=Sheet1!$A$2:$A$7", "=Sheet1!$B$2:$B$7");
-    try chart.setSeriesName(0, "=Sheet1!$B$1");
+    // Add the first series
+    _ = try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
 
-    // Add the second series to the chart.
-    try chart.addSeries("=Sheet1!$A$2:$A$7", "=Sheet1!$C$2:$C$7");
-    try chart.setSeriesName(1, "=Sheet1!$C$1");
+    // Add the second series
+    _ = try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
 
     // Add a chart title and some axis labels.
-    try chart.setTitle("Results of sample analysis");
-    try chart.setAxisName(.x_axis, "Test number");
-    try chart.setAxisName(.y_axis, "Sample length (mm)");
+    try chart2.setTitle("Results of sample analysis");
+    try chart2.setAxisName(.x_axis, "Test number");
+    try chart2.setAxisName(.y_axis, "Sample length (mm)");
 
     // Set an Excel chart style.
-    chart.setStyle(12);
+    chart2.setStyle(12);
 
     // Insert the chart into the worksheet.
-    try worksheet.insertChart(17, 4, chart);
+    try worksheet.insertChart(17, 4, chart2);
 
     // Chart 3: Create a percent stacked column chart.
-    chart = try Chart.init(allocator, workbook.workbook, .column_stacked_percent);
+    var chart3 = try workbook.addChart(.column_stacked_percent);
 
-    // Add the first series to the chart.
-    try chart.addSeries("=Sheet1!$A$2:$A$7", "=Sheet1!$B$2:$B$7");
-    try chart.setSeriesName(0, "=Sheet1!$B$1");
+    // Add the first series
+    _ = try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
 
-    // Add the second series to the chart.
-    try chart.addSeries("=Sheet1!$A$2:$A$7", "=Sheet1!$C$2:$C$7");
-    try chart.setSeriesName(1, "=Sheet1!$C$1");
+    // Add the second series
+    _ = try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
 
     // Add a chart title and some axis labels.
-    try chart.setTitle("Results of sample analysis");
-    try chart.setAxisName(.x_axis, "Test number");
-    try chart.setAxisName(.y_axis, "Sample length (mm)");
+    try chart3.setTitle("Results of sample analysis");
+    try chart3.setAxisName(.x_axis, "Test number");
+    try chart3.setAxisName(.y_axis, "Sample length (mm)");
 
     // Set an Excel chart style.
-    chart.setStyle(13);
+    chart3.setStyle(13);
 
     // Insert the chart into the worksheet.
-    try worksheet.insertChart(33, 4, chart);
+    try worksheet.insertChart(33, 4, chart3);
 }

@@ -53,9 +53,8 @@ pub const Format = struct {
 
     pub fn deinit(self: *Format) void {
         // The format is owned by the workbook, so we don't need to free it
-        // But we should clear any resources we've allocated
+        // We just set the inner format to undefined
         self.format = undefined;
-        self.allocator.destroy(self);
     }
 
     /// Set font properties

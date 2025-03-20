@@ -13,7 +13,10 @@ pub fn main() !void {
         allocator,
         "chart_clustered.xlsx",
     );
-    defer workbook.deinit();
+    defer {
+        _ = workbook.close() catch {};
+        workbook.deinit();
+    }
 
     var worksheet = try workbook.addWorksheet("Sheet1");
 
@@ -58,25 +61,21 @@ pub fn main() !void {
     try worksheet.writeNumber(5, 4, 200, null);
 
     // Create a column chart
-    var chart = try excel.Chart.init(
-        allocator,
-        workbook.workbook,
-        .column,
-    );
+    var chart = try workbook.addChart(.column);
 
-    // Configure the series with 2D ranges for categories (A2:B6)
+    // Add the series with 2D ranges for categories (A2:B6)
     // This creates the clusters
-    try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$C$2:$C$6");
-    try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$D$2:$D$6");
-    try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$E$2:$E$6");
+    _ = try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$C$2:$C$6");
+    _ = try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$D$2:$D$6");
+    _ = try chart.addSeries("Sheet1!$A$2:$B$6", "Sheet1!$E$2:$E$6");
 
     // Set chart title and style
-    try chart.setTitle("Clustered Chart");
+    try chart.setTitle("Results of sample analysis");
     chart.setStyle(37);
 
     // Turn off the legend
     chart.setLegendPosition(.none);
 
-    // Insert the chart into the worksheet at cell G3
+    // Insert the chart into the worksheet
     try worksheet.insertChart(2, 6, chart);
 }

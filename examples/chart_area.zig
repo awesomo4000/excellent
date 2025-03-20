@@ -13,7 +13,10 @@ pub fn main() !void {
         allocator,
         "chart_area.xlsx",
     );
-    defer workbook.deinit();
+    defer {
+        _ = workbook.close() catch {};
+        workbook.deinit();
+    }
 
     var worksheet = try workbook.addWorksheet("Sheet1");
 
@@ -48,42 +51,40 @@ pub fn main() !void {
     }
 
     // Chart 1: Create an area chart
-    var chart1 = try excel.Chart.init(
-        allocator,
-        workbook.workbook,
-        .area,
-    );
+    var chart1 = try workbook.addChart(.area);
 
     // Add the first series
-    try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
-
+    var c1series1 = try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
+    try c1series1.setName("Batch 1");
     // Add the second series
-    try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    var c1series2 = try chart1.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    try c1series2.setName("Batch 2");
 
     // Set chart title
     try chart1.setTitle("Results of sample analysis");
 
     // Set chart style
     chart1.setStyle(11);
+    try chart1.setXAxisName("Test number");
+    try chart1.setYAxisName("Sample length (mm)");
 
     // Insert the chart into the worksheet
     try worksheet.insertChart(1, 4, chart1);
 
     // Chart 2: Create a stacked area chart
-    var chart2 = try excel.Chart.init(
-        allocator,
-        workbook.workbook,
-        .area_stacked,
-    );
+    var chart2 = try workbook.addChart(.area_stacked);
 
     // Add the first series
-    try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
-
+    var c2series1 = try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
+    try c2series1.setName("Batch 1");
     // Add the second series
-    try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    var c2series2 = try chart2.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    try c2series2.setName("Batch 2");
 
     // Set chart title
     try chart2.setTitle("Results of sample analysis");
+    try chart2.setXAxisName("Test number");
+    try chart2.setYAxisName("Sample length (mm)");
 
     // Set chart style
     chart2.setStyle(12);
@@ -92,20 +93,19 @@ pub fn main() !void {
     try worksheet.insertChart(17, 4, chart2);
 
     // Chart 3: Create a percent stacked area chart
-    var chart3 = try excel.Chart.init(
-        allocator,
-        workbook.workbook,
-        .area_stacked_percent,
-    );
+    var chart3 = try workbook.addChart(.area_stacked_percent);
 
     // Add the first series
-    try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
-
+    var c3series1 = try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$B$2:$B$7");
+    try c3series1.setName("Batch 1");
     // Add the second series
-    try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    var c3series2 = try chart3.addSeries("Sheet1!$A$2:$A$7", "Sheet1!$C$2:$C$7");
+    try c3series2.setName("Batch 2");
 
     // Set chart title
     try chart3.setTitle("Results of sample analysis");
+    try chart3.setXAxisName("Test number");
+    try chart3.setYAxisName("Sample length (mm)");
 
     // Set chart style
     chart3.setStyle(13);

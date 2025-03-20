@@ -31,7 +31,7 @@ test "Chart - creation and basic operations" {
 
     var chart = try Chart.init(allocator, workbook.workbook, .column);
     defer chart.deinit();
-    try chart.addSeries("=Sheet1!$A$1:$A$5", "=Sheet1!$B$1:$B$5");
+    _ = try chart.addSeries("=Sheet1!$A$1:$A$5", "=Sheet1!$B$1:$B$5");
     try chart.setTitle("Test Chart");
     chart.setStyle(2);
     chart.setLegendPosition(.right);

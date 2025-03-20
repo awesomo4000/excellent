@@ -3,6 +3,7 @@ const c = @import("xlsxwriter");
 const error_utils = @import("error_utils.zig");
 const worksheet_mod = @import("worksheet.zig");
 const format_mod = @import("format.zig");
+const chart_mod = @import("chart.zig");
 
 pub const Workbook = struct {
     allocator: std.mem.Allocator,
@@ -10,6 +11,7 @@ pub const Workbook = struct {
     workbook: *c.lxw_workbook,
     isOpen: bool = false,
     formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
+    charts: std.ArrayList(*chart_mod.Chart) = std.ArrayList(*chart_mod.Chart).init(std.heap.page_allocator),
 
     pub fn create(
         allocator: std.mem.Allocator,
@@ -26,6 +28,7 @@ pub const Workbook = struct {
             .workbook = c_workbook,
             .isOpen = true,
             .formats = std.ArrayList(*format_mod.Format).init(allocator),
+            .charts = std.ArrayList(*chart_mod.Chart).init(allocator),
         };
 
         return workbook;
@@ -47,8 +50,15 @@ pub const Workbook = struct {
         // deinit the formats
         for (self.formats.items) |format| {
             format.deinit();
+            self.allocator.destroy(format);
         }
         self.formats.deinit();
+        // deinit the charts
+        for (self.charts.items) |chart| {
+            chart.deinit();
+            self.allocator.destroy(chart);
+        }
+        self.charts.deinit();
         self.allocator.destroy(self);
     }
 
@@ -66,6 +76,15 @@ pub const Workbook = struct {
         };
         try self.formats.append(format);
         return format;
+    }
+
+    pub fn addChart(self: *Workbook, chart_type: chart_mod.ChartType) !*chart_mod.Chart {
+        if (!self.isOpen) return error_utils.XlsxError.GenericError;
+
+        const chart = try self.allocator.create(chart_mod.Chart);
+        chart.* = try chart_mod.Chart.init(self.allocator, self.workbook, chart_type);
+        try self.charts.append(chart);
+        return chart;
     }
 
     pub fn addWorksheet(self: *Workbook, name: ?[]const u8) !worksheet_mod.Worksheet {

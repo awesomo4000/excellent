@@ -13,7 +13,10 @@ pub fn main() !void {
         allocator,
         "chart.xlsx",
     );
-    defer workbook.deinit();
+    defer {
+        _ = workbook.close() catch {};
+        workbook.deinit();
+    }
 
     var worksheet = try workbook.addWorksheet("Sheet1");
 
@@ -39,26 +42,23 @@ pub fn main() !void {
     }
 
     // Create a column chart
-    var chart = try excel.Chart.init(
-        allocator,
-        workbook.workbook,
-        .column,
-    );
+    var chart = try workbook.addChart(.column);
 
     // Add data series to the chart
-    try chart.addSeries(null, "Sheet1!$A$1:$A$5");
-    try chart.addSeries(null, "Sheet1!$B$1:$B$5");
-    try chart.addSeries(null, "Sheet1!$C$1:$C$5");
+    _ = try chart.addSeries(null, "Sheet1!$A$1:$A$5");
+    _ = try chart.addSeries(null, "Sheet1!$B$1:$B$5");
+    _ = try chart.addSeries(null, "Sheet1!$C$1:$C$5");
 
-    // Set chart title with custom font
+    // Set chart title and font
     try chart.setTitle("Year End Results");
-    chart.setTitleFont(.{
-        .name = "Arial",
-        .size = 16,
-        .bold = true,
-        .color = 0x0000FF, // Blue
-    });
+    const font = excel.ChartFont{
+        .name = "Chart example",
+        .size = 18,
+        .color = 0x0000FF, // Blue color
+        .bold = false,
+    };
+    chart.setTitleFont(font);
 
-    // Insert the chart into the worksheet at cell B7
+    // Insert the chart into the worksheet at B7
     try worksheet.insertChart(6, 1, chart);
 }

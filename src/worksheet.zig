@@ -440,8 +440,53 @@ pub const Worksheet = struct {
         self.setColumnOpt(first_col, last_col, width, format, hidden);
     }
 
-    pub fn insertChart(self: *Worksheet, row: usize, col: usize, chart_obj: chart.Chart) !void {
-        _ = c.worksheet_insert_chart(self.worksheet, @intCast(row), @intCast(col), chart_obj.inner);
+    /// Insert a chart into the worksheet at the specified position
+    pub fn insertChart(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        chart_obj: *chart.Chart,
+    ) !void {
+        const result = c.worksheet_insert_chart(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            chart_obj.chart_inner,
+        );
+        if (result != c.LXW_NO_ERROR) return error.ChartInsertFailed;
+    }
+
+    /// Chart options for chart positioning
+    pub const ChartOptions = struct {
+        x_offset: i32 = 0,
+        y_offset: i32 = 0,
+        x_scale: f32 = 1.0,
+        y_scale: f32 = 1.0,
+    };
+
+    /// Insert a chart into the worksheet at the specified position with options
+    pub fn insertChartOpt(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        chart_obj: *chart.Chart,
+        options: ChartOptions,
+    ) !void {
+        var c_options = c.lxw_chart_options{
+            .x_offset = options.x_offset,
+            .y_offset = options.y_offset,
+            .x_scale = options.x_scale,
+            .y_scale = options.y_scale,
+        };
+
+        const result = c.worksheet_insert_chart_opt(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            chart_obj.chart_inner,
+            &c_options,
+        );
+        if (result != c.LXW_NO_ERROR) return error.ChartInsertFailed;
     }
 
     /// Filter criteria for autofilter

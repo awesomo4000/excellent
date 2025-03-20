@@ -4,7 +4,7 @@ const cell_utils = @import("cell_utils.zig");
 
 test "setColumnOptRange validation" {
     const testing = std.testing;
-    std.debug.print("\nRunning setColumnOptRange validation test...\n", .{});
+    //std.debug.print("\nRunning setColumnOptRange validation test...\n", .{});
 
     const MockWorksheet = struct {
         // Simplified version of setColumnOptRange that only validates the input
@@ -35,7 +35,7 @@ test "setColumnOptRange validation" {
     // Test case 4: Empty range
     try testing.expectError(error.InvalidRange, MockWorksheet.validateColumnRange(""));
 
-    std.debug.print("setColumnOptRange validation test completed successfully!\n", .{});
+    //std.debug.print("setColumnOptRange validation test completed successfully!\n", .{});
 }
 
 // Add more worksheet tests
