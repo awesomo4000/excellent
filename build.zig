@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
         });
 
     // Add a module for the excellent library
-    const lib_mod = b.createModule(.{
+    const lib_mod = b.addModule("excellent", .{
         .root_source_file = b.path("src/excellent.zig"),
         .target = target,
         .optimize = optimize,
@@ -22,12 +22,13 @@ pub fn build(b: *std.Build) void {
         "xlsxwriter",
     ));
 
-    const mktmp_mod = b.createModule(.{
+    const mktmp_mod = b.addModule("mktmp", .{
         .root_source_file = b.path("src/mktmp.zig"),
         .target = target,
         .optimize = optimize,
     });
     lib_mod.addImport("mktmp", mktmp_mod);
+
     // Add a clean step that uses std.fs operations
     const clean_step = b.step("clean", "Clean up.");
     clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);
@@ -44,14 +45,6 @@ pub fn build(b: *std.Build) void {
         "example",
         "Specify which example to run",
     );
-
-    // const exe_mod = b.createModule(.{
-    //     .root_source_file = b.path("src/main.zig"),
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
-
-    // exe_mod.addImport("excellent", lib_mod);
 
     const lib = b.addLibrary(.{
         .linkage = .static,
@@ -180,6 +173,9 @@ pub fn build(b: *std.Build) void {
         "Build all examples",
     );
 
+    // Make examples step depend on the install step
+    examples_step.dependOn(b.getInstallStep());
+
     // If a specific example is requested, only build that one
     if (example_option) |example| {
         const example_path = b.fmt(
@@ -200,48 +196,60 @@ pub fn build(b: *std.Build) void {
             .root_module = example_mod,
         });
 
-        const run_example = b.addRunArtifact(example_exe);
         b.installArtifact(example_exe);
-        examples_step.dependOn(&example_exe.step);
-        examples_step.dependOn(b.getInstallStep());
+        const run_example = b.addRunArtifact(example_exe);
         run_step.dependOn(&run_example.step);
-    } else {
-        // Otherwise build all examples
-        var dir = std.fs.cwd().openDir(
-            examples_dir,
-            .{ .iterate = true },
-        ) catch unreachable;
-        defer dir.close();
+        return;
+    }
 
-        var it = dir.iterate();
-        while (it.next() catch unreachable) |entry| {
-            if (entry.kind != .file or !std.mem.endsWith(
-                u8,
-                entry.name,
-                ".zig",
-            )) continue;
+    // Build all examples if the directory exists
+    var has_examples = false;
+    if (std.fs.cwd().access(examples_dir, .{})) {
+        has_examples = true;
+    } else |err| {
+        if (err != error.FileNotFound) {
+            std.debug.print("Error checking examples directory: {}\n", .{err});
+        }
+    }
 
-            const example_name =
-                entry.name[0 .. entry.name.len - 4];
-            const example_mod = b.createModule(.{
-                .root_source_file = b.path(b.fmt(
-                    "{s}/{s}",
-                    .{ examples_dir, entry.name },
-                )),
-                .target = target,
-                .optimize = optimize,
-            });
+    if (has_examples) {
+        if (std.fs.cwd().openDir(examples_dir, .{ .iterate = true })) |dir| {
+            var mutable_dir = dir;
+            defer mutable_dir.close();
 
-            example_mod.addImport("excellent", lib_mod);
+            var it = mutable_dir.iterate();
+            while (it.next() catch unreachable) |entry| {
+                if (entry.kind != .file or !std.mem.endsWith(
+                    u8,
+                    entry.name,
+                    ".zig",
+                )) continue;
 
-            const example_exe = b.addExecutable(.{
-                .name = example_name,
-                .root_module = example_mod,
-            });
+                const example_name = entry.name[0 .. entry.name.len - 4];
+                const example_mod_all = b.createModule(.{
+                    .root_source_file = b.path(b.fmt(
+                        "{s}/{s}",
+                        .{ examples_dir, entry.name },
+                    )),
+                    .target = target,
+                    .optimize = optimize,
+                });
 
-            b.installArtifact(example_exe);
-            examples_step.dependOn(&example_exe.step);
-            examples_step.dependOn(b.getInstallStep());
+                example_mod_all.addImport("excellent", lib_mod);
+
+                const example_exe = b.addExecutable(.{
+                    .name = example_name,
+                    .root_module = example_mod_all,
+                });
+
+                // Install the example executable
+                const install_example = b.addInstallArtifact(example_exe, .{});
+                examples_step.dependOn(&install_example.step);
+            }
+        } else |err| {
+            if (err != error.FileNotFound) {
+                std.debug.print("Error opening examples directory: {}\n", .{err});
+            }
         }
     }
 }
