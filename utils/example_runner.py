@@ -16,18 +16,21 @@ def get_relative_path(path, project_root):
         return path
 
 
-def build_example(example_name, project_root):
+def build_example(example_name, project_root, quiet=False):
     """Build the example and return True if successful"""
-    print(f"Building example: {example_name}")
+    if not quiet:
+        print(f"Building example: {example_name}")
     cmd = ["zig", "build", "examples", f"-Dexample={example_name}"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode != 0:
-        print(f"❌ Build failed for {example_name}")
-        print(result.stderr)
+        if not quiet:
+            print(f"❌ Build failed for {example_name}")
+            print(result.stderr)
         return False
     
-    print(f"✅ Build successful for {example_name}")
+    if not quiet:
+        print(f"✅ Build successful for {example_name}")
     return True
 
 
