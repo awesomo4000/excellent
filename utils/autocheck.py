@@ -192,85 +192,103 @@ def check_all_examples(args):
             print(f"{example_name} [BROKEN] ⚠️ Skipping as known broken example")
             continue
             
-        # Run the example
-        if not run_example(example_name, PROJECT_ROOT, quiet=True):
-            if is_broken_example(example_name, broken_examples):
-                print(f"{example_name} [BROKEN] ✅ Failed to run as expected")
+        # Build if requested
+        if args.build:
+            print(f"Building {example_name} ... ", end="", flush=True)
+            if not build_example(example_name, PROJECT_ROOT, quiet=True):
+                if is_broken_example(example_name, broken_examples):
+                    print("✅ [BROKEN] Failed as expected")
+                    continue
+                print("❌")
+                failed_examples.append((example_name, "Failed to build example"))
                 continue
-            failed_examples.append((example_name, "Failed to run example"))
-            continue
-            
-        # Check the Excel file
-        excel_file = Path(f"{example_name}.xlsx")
-        if not excel_file.exists():
-            if is_broken_example(example_name, broken_examples):
-                print(f"{example_name} [BROKEN] ✅ Excel file not generated as expected")
+            # Print success for build-only mode
+            if not args.run:
+                print("✅")
                 continue
-            failed_examples.append((example_name, "Excel file not generated"))
-            continue
             
-        try:
-            # Load workbook for checks
-            workbook = openpyxl.load_workbook(excel_file)
+        # Run if requested
+        if args.run:
+            if not run_example(example_name, PROJECT_ROOT, quiet=True):
+                if is_broken_example(example_name, broken_examples):
+                    print(f"{example_name} [BROKEN] ✅ Failed to run as expected")
+                    continue
+                failed_examples.append((example_name, "Failed to run example"))
+                continue
             
-            # Run checks
-            formula_check = check_formulas(workbook, example_name)
-            string_check = check_string_null_termination(workbook, example_name)
-            xml_check = check_xml_content(example_name)
-            binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
-            visibility_check = check_row_visibility(example_name, REFERENCE_DIR)
-            content_check = compare_with_reference(
-                example_name, 
-                REFERENCE_DIR, 
-                RESULTS_DIR, 
-                PROJECT_ROOT, 
-                quiet=True, 
-                ignore_styles=args.ignore_styles
-            )
+        # Only check Excel files if we're not in build-only mode
+        if not (args.build and not args.run):
+            # Check the Excel file
+            excel_file = Path(f"{example_name}.xlsx")
+            if not excel_file.exists():
+                if is_broken_example(example_name, broken_examples):
+                    print(f"{example_name} [BROKEN] ✅ Excel file not generated as expected")
+                    continue
+                failed_examples.append((example_name, "Excel file not generated"))
+                continue
             
-            all_passed = formula_check and string_check and xml_check and binary_check and visibility_check and content_check
-            
-            if is_broken_example(example_name, broken_examples):
-                if all_passed:
-                    print(f"{example_name} [BROKEN] ⚠️ Unexpectedly passed all checks")
-                    failed_examples.append((example_name, "Broken example passed all checks"))
-                else:
-                    print(f"{example_name} [BROKEN] ✅ Failed checks as expected")
-            elif all_passed:
-                print(f"{example_name} ✅")
-            else:
-                failed_examples.append((example_name, "One or more checks failed"))
-                # Re-run checks with verbose output to show details
-                print(f"\nDetailed output for {example_name}:")
-                try:
-                    workbook = openpyxl.load_workbook(Path(f"{example_name}.xlsx"))
-                    print(f"\n[{example_name}] Checking formulas...")
-                    check_formulas(workbook, example_name)
-                    print(f"\n[{example_name}] Checking string null-termination...")
-                    check_string_null_termination(workbook, example_name)
-                    print(f"\n[{example_name}] Checking XML content...")
-                    check_xml_content(example_name)
-                    print(f"\n[{example_name}] Checking binary compatibility...")
-                    check_binary_compatibility(example_name, REFERENCE_DIR)
-                    print(f"\n[{example_name}] Checking row visibility...")
-                    check_row_visibility(example_name, REFERENCE_DIR)
-                    print(f"\n[{example_name}] Comparing with reference file...")
-                    compare_with_reference(
-                        example_name, 
-                        REFERENCE_DIR, 
-                        RESULTS_DIR, 
-                        PROJECT_ROOT, 
-                        ignore_styles=args.ignore_styles
-                    )
-                except Exception as e:
-                    print(f"Error during detailed check: {e}")
-                    traceback.print_exc()
+            try:
+                # Load workbook for checks
+                workbook = openpyxl.load_workbook(excel_file)
                 
-        except Exception as e:
-            if is_broken_example(example_name, broken_examples):
-                print(f"{example_name} [BROKEN] ✅ Error occurred as expected: {e}")
-                continue
-            failed_examples.append((example_name, f"Error checking Excel file: {e}"))
+                # Run checks
+                formula_check = check_formulas(workbook, example_name)
+                string_check = check_string_null_termination(workbook, example_name)
+                xml_check = check_xml_content(example_name)
+                binary_check = check_binary_compatibility(example_name, REFERENCE_DIR)
+                visibility_check = check_row_visibility(example_name, REFERENCE_DIR)
+                content_check = compare_with_reference(
+                    example_name, 
+                    REFERENCE_DIR, 
+                    RESULTS_DIR, 
+                    PROJECT_ROOT, 
+                    quiet=True, 
+                    ignore_styles=args.ignore_styles
+                )
+                
+                all_passed = formula_check and string_check and xml_check and binary_check and visibility_check and content_check
+                
+                if is_broken_example(example_name, broken_examples):
+                    if all_passed:
+                        print(f"{example_name} [BROKEN] ⚠️ Unexpectedly passed all checks")
+                        failed_examples.append((example_name, "Broken example passed all checks"))
+                    else:
+                        print(f"{example_name} [BROKEN] ✅ Failed checks as expected")
+                elif all_passed:
+                    print(f"{example_name} ✅")
+                else:
+                    failed_examples.append((example_name, "One or more checks failed"))
+                    # Re-run checks with verbose output to show details
+                    print(f"\nDetailed output for {example_name}:")
+                    try:
+                        workbook = openpyxl.load_workbook(Path(f"{example_name}.xlsx"))
+                        print(f"\n[{example_name}] Checking formulas...")
+                        check_formulas(workbook, example_name)
+                        print(f"\n[{example_name}] Checking string null-termination...")
+                        check_string_null_termination(workbook, example_name)
+                        print(f"\n[{example_name}] Checking XML content...")
+                        check_xml_content(example_name)
+                        print(f"\n[{example_name}] Checking binary compatibility...")
+                        check_binary_compatibility(example_name, REFERENCE_DIR)
+                        print(f"\n[{example_name}] Checking row visibility...")
+                        check_row_visibility(example_name, REFERENCE_DIR)
+                        print(f"\n[{example_name}] Comparing with reference file...")
+                        compare_with_reference(
+                            example_name, 
+                            REFERENCE_DIR, 
+                            RESULTS_DIR, 
+                            PROJECT_ROOT, 
+                            ignore_styles=args.ignore_styles
+                        )
+                    except Exception as e:
+                        print(f"Error during detailed check: {e}")
+                        traceback.print_exc()
+                
+            except Exception as e:
+                if is_broken_example(example_name, broken_examples):
+                    print(f"{example_name} [BROKEN] ✅ Error occurred as expected: {e}")
+                    continue
+                failed_examples.append((example_name, f"Error checking Excel file: {e}"))
     
     # Print detailed failure information if any
     if failed_examples:

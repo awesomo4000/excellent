@@ -64,7 +64,12 @@ it will show compile errors while developing the code, and
 run the autocheck.py if it passes compilation.
 
 ```bash
-python3 utils/autocheck.py tutorial1 --build --run
+python3 utils/autocheck.py tutorial1 --build --run        # Build, run and check
+python3 utils/autocheck.py tutorial1 --ignore-styles      # Ignore style differences
+python3 utils/autocheck.py --all                         # Check all examples
+python3 utils/autocheck.py --all --build                 # Build all examples
+python3 utils/autocheck.py --all --build --force         # Build all examples including broken ones
+python3 utils/autocheck.py --list-broken                 # List known broken examples
 ```
 
 This script performs several checks on the generated Excel file:
