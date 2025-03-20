@@ -186,6 +186,15 @@ def check_all_examples(args):
     failed_examples = []
     broken_examples = load_broken_examples()
     
+    # Build all examples at once if requested
+    if args.build:
+        print("Building all examples... ", end="", flush=True)
+        if not build_example("", PROJECT_ROOT, quiet=True, build_all=True):
+            print("❌")
+            failed_examples.append(("all", "Failed to build examples"))
+        else:
+            print("✅")
+    
     for example_file in example_files:
         example_name = example_file.stem
         if example_name == "status":  # Skip status binary
@@ -195,21 +204,6 @@ def check_all_examples(args):
         if is_broken_example(example_name, broken_examples) and not args.force:
             print(f"{example_name} [BROKEN] ⚠️ Skipping as known broken example")
             continue
-            
-        # Build if requested
-        if args.build:
-            print(f"Building {example_name} ... ", end="", flush=True)
-            if not build_example(example_name, PROJECT_ROOT, quiet=True):
-                if is_broken_example(example_name, broken_examples):
-                    print("✅ [BROKEN] Failed as expected")
-                    continue
-                print("❌")
-                failed_examples.append((example_name, "Failed to build example"))
-                continue
-            # Print success for build-only mode
-            if not args.run:
-                print("✅")
-                continue
             
         # Run if requested
         if args.run:

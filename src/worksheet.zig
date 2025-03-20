@@ -732,4 +732,52 @@ pub const Worksheet = struct {
         );
         if (result != c.LXW_NO_ERROR) return error.InsertImageFailed;
     }
+
+    /// Button options for inserting buttons
+    pub const ButtonOptions = struct {
+        caption: []const u8,
+        macro: []const u8,
+        width: u16 = 80,
+        height: u16 = 30,
+    };
+
+    /// Insert a button into the worksheet
+    pub fn insertButton(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        options: ButtonOptions,
+    ) !void {
+        // Ensure strings are null-terminated
+        const c_caption = try self.workbook.allocator.dupeZ(u8, options.caption);
+        defer self.workbook.allocator.free(c_caption);
+
+        const c_macro = try self.workbook.allocator.dupeZ(u8, options.macro);
+        defer self.workbook.allocator.free(c_macro);
+
+        var c_options = c.lxw_button_options{
+            .caption = c_caption.ptr,
+            .macro = c_macro.ptr,
+            .width = options.width,
+            .height = options.height,
+        };
+
+        const result = c.worksheet_insert_button(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            &c_options,
+        );
+        if (result != c.LXW_NO_ERROR) return error.InsertButtonFailed;
+    }
+
+    /// Insert a button into the worksheet using a cell reference (e.g., "A1", "B2")
+    pub fn insertButtonCell(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        options: ButtonOptions,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        try self.insertButton(pos.row, pos.col, options);
+    }
 };

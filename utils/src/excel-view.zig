@@ -58,10 +58,12 @@ pub fn main() !void {
 
     // Create a unique temporary file name using timestamp
     const timestamp = std.time.timestamp();
+    const original_ext = std.fs.path.extension(generated_path);
+    const original_name = std.fs.path.stem(generated_path);
     const temp_name = try std.fmt.allocPrint(
         allocator,
-        "excel_{d}.xlsx",
-        .{timestamp},
+        "{s}_{d}{s}",
+        .{ original_name, timestamp, original_ext },
     );
     defer allocator.free(temp_name);
 

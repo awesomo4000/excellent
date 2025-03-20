@@ -97,4 +97,17 @@ pub const Workbook = struct {
             .worksheet = worksheet,
         };
     }
+
+    /// Add a VBA project to the workbook
+    /// This is required for macros to work
+    /// The vba_project_path should point to a vbaProject.bin file
+    pub fn addVbaProject(self: *Workbook, vba_project_path: []const u8) !void {
+        if (!self.isOpen) return error_utils.XlsxError.GenericError;
+
+        const c_path = try self.allocator.dupeZ(u8, vba_project_path);
+        defer self.allocator.free(c_path);
+
+        const result = c.workbook_add_vba_project(self.workbook, c_path.ptr);
+        if (result != c.LXW_NO_ERROR) return error_utils.translateErrorCode(result);
+    }
 };

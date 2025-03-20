@@ -10,7 +10,17 @@ const ChartFill = excel.ChartFill;
 const ChartPoint = chart.ChartPoint;
 
 pub fn main() !void {
-    var workbook = try Workbook.create(std.heap.page_allocator, "chart_doughnut.xlsx");
+    var gpa =
+        std.heap.GeneralPurposeAllocator(.{}){};
+    defer if (gpa.deinit() == .leak) {
+        std.debug.panic("leaks detected", .{});
+    };
+    const allocator = gpa.allocator();
+
+    var workbook = try Workbook.create(
+        allocator,
+        "chart_doughnut.xlsx",
+    );
     defer {
         _ = workbook.close() catch {};
         workbook.deinit();
