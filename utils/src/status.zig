@@ -199,38 +199,22 @@ fn printShortOutput(
         }
     }
 
-    try printWrappedNames(
-        writer,
-        have_ref_xlsx_names.items,
-        "haveRefXlsx: ",
-    );
+    try printWrappedNames(writer, have_ref_xlsx_names.items, "haveRefXlsx: ");
     try writer.print(
         "({d}/{d})\n\n",
         .{ have_ref_xlsx_names.items.len, examples.items.len },
     );
-    try printWrappedNames(
-        writer,
-        impl_names.items,
-        "haveZig: ",
-    );
+    try printWrappedNames(writer, impl_names.items, "haveZig: ");
     try writer.print(
         "({d}/{d})\n\n",
         .{ impl_names.items.len, examples.items.len },
     );
-    try printWrappedNames(
-        writer,
-        autocheck_passed_names.items,
-        "autoChecked: ",
-    );
+    try printWrappedNames(writer, autocheck_passed_names.items, "autoChecked: ");
     try writer.print(
         "({d}/{d})\n\n",
         .{ autocheck_passed_names.items.len, examples.items.len },
     );
-    try printWrappedNames(
-        writer,
-        verified_names.items,
-        "verified: ",
-    );
+    try printWrappedNames(writer, verified_names.items, "verified: ");
     try writer.print(
         "({d}/{d})\n",
         .{ verified_names.items.len, examples.items.len },
