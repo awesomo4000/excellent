@@ -31,13 +31,19 @@ pub fn build(b: *std.Build) void {
 
     // Add a clean step that uses std.fs operations
     const clean_step = b.step("clean", "Clean up.");
-    clean_step.dependOn(&b.addRemoveDirTree(b.path("zig-out")).step);
-    clean_step.dependOn(&b.addRemoveDirTree(b.path(".zig-cache")).step);
+    clean_step.dependOn(
+        &b.addRemoveDirTree(b.path("zig-out")).step,
+    );
+    clean_step.dependOn(
+        &b.addRemoveDirTree(b.path(".zig-cache")).step,
+    );
 
-    // Add custom clean step for Excel files in the root directory
-    const clean_xlsx_step = b.addSystemCommand(&[_][]const u8{
-        "sh", "-c", "rm -f *.xlsx *.xlsm",
-    });
+    // Add custom clean step for Excel files
+    // in the root directory
+    const clean_xlsx_step =
+        b.addSystemCommand(&[_][]const u8{
+            "sh", "-c", "rm -f *.xlsx *.xlsm",
+        });
     clean_step.dependOn(&clean_xlsx_step.step);
 
     const example_option = b.option(
@@ -66,9 +72,14 @@ pub fn build(b: *std.Build) void {
     });
 
     // Install the test binary
-    const install_test = b.addInstallArtifact(lib_unit_tests, .{});
+    const install_test = b.addInstallArtifact(
+        lib_unit_tests,
+        .{},
+    );
 
-    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+    const run_lib_unit_tests = b.addRunArtifact(
+        lib_unit_tests,
+    );
 
     const test_step = b.step(
         "test",
@@ -87,7 +98,9 @@ pub fn build(b: *std.Build) void {
         , .{
             coverage_dir.getPath(b),
             coverage_dir.getPath(b),
-            b.pathJoin(&.{ b.install_prefix, "bin", "excellent_test" }),
+            b.pathJoin(
+                &.{ b.install_prefix, "bin", "excellent_test" },
+            ),
         }),
     });
 
@@ -182,7 +195,10 @@ pub fn build(b: *std.Build) void {
             "{s}/{s}.zig",
             .{ examples_dir, example },
         );
-        std.debug.print("Building example: {s}\n", .{example_path});
+        std.debug.print(
+            "Building example: {s}\n",
+            .{example_path},
+        );
         const example_mod = b.createModule(.{
             .root_source_file = b.path(example_path),
             .target = target,
@@ -208,12 +224,19 @@ pub fn build(b: *std.Build) void {
         has_examples = true;
     } else |err| {
         if (err != error.FileNotFound) {
-            std.debug.print("Error checking examples directory: {}\n", .{err});
+            std.debug.print("[excellent:WARN]", .{});
+            std.debug.print(
+                "Err checking examples directory: {}\n",
+                .{err},
+            );
         }
     }
 
     if (has_examples) {
-        if (std.fs.cwd().openDir(examples_dir, .{ .iterate = true })) |dir| {
+        if (std.fs.cwd().openDir(
+            examples_dir,
+            .{ .iterate = true },
+        )) |dir| {
             var mutable_dir = dir;
             defer mutable_dir.close();
 
@@ -225,7 +248,8 @@ pub fn build(b: *std.Build) void {
                     ".zig",
                 )) continue;
 
-                const example_name = entry.name[0 .. entry.name.len - 4];
+                const example_name =
+                    entry.name[0 .. entry.name.len - 4];
                 const example_mod_all = b.createModule(.{
                     .root_source_file = b.path(b.fmt(
                         "{s}/{s}",
@@ -243,12 +267,17 @@ pub fn build(b: *std.Build) void {
                 });
 
                 // Install the example executable
-                const install_example = b.addInstallArtifact(example_exe, .{});
+                const install_example =
+                    b.addInstallArtifact(example_exe, .{});
                 examples_step.dependOn(&install_example.step);
             }
         } else |err| {
             if (err != error.FileNotFound) {
-                std.debug.print("Error opening examples directory: {}\n", .{err});
+                std.debug.print("[excellent:WARN]", .{});
+                std.debug.print(
+                    "Err opening examples directory: {}\n",
+                    .{err},
+                );
             }
         }
     }
