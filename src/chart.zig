@@ -8,6 +8,8 @@ pub const ChartType = enum {
     bar_stacked,
     bar_stacked_percent,
     line,
+    line_stacked,
+    line_stacked_percent,
     pie,
     scatter,
     area,
@@ -25,6 +27,8 @@ pub const ChartType = enum {
             .bar_stacked => @intCast(xlsxwriter.LXW_CHART_BAR_STACKED),
             .bar_stacked_percent => @intCast(xlsxwriter.LXW_CHART_BAR_STACKED_PERCENT),
             .line => @intCast(xlsxwriter.LXW_CHART_LINE),
+            .line_stacked => @intCast(xlsxwriter.LXW_CHART_LINE_STACKED),
+            .line_stacked_percent => @intCast(xlsxwriter.LXW_CHART_LINE_STACKED_PERCENT),
             .pie => @intCast(xlsxwriter.LXW_CHART_PIE),
             .scatter => @intCast(xlsxwriter.LXW_CHART_SCATTER),
             .area => @intCast(xlsxwriter.LXW_CHART_AREA),
@@ -39,12 +43,16 @@ pub const ChartType = enum {
 };
 
 pub const ChartFont = struct {
-    name: []const u8 = "Arial",
+    name: []const u8 = "Calibri",
     size: f64 = 10.0,
     bold: bool = false,
     italic: bool = false,
     color: u32 = Colors.black,
     rotation: i16 = 0,
+    underline: bool = false,
+    charset: u8 = 0,
+    pitchFamily: u8 = 0,
+    baseline: i8 = 0,
 
     fn toNative(self: ChartFont) xlsxwriter.lxw_chart_font {
         return .{
@@ -54,10 +62,10 @@ pub const ChartFont = struct {
             .italic = if (self.italic) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
             .color = self.color,
             .rotation = self.rotation,
-            .underline = 0,
-            .charset = 0,
-            .pitch_family = 0,
-            .baseline = 0,
+            .underline = if (self.underline) xlsxwriter.LXW_TRUE else xlsxwriter.LXW_FALSE,
+            .charset = self.charset,
+            .pitch_family = self.pitchFamily,
+            .baseline = self.baseline,
         };
     }
 };
@@ -94,6 +102,72 @@ pub const ChartFill = struct {
             .color = self.color,
             .transparency = self.transparency,
             .none = 0,
+        };
+    }
+};
+
+pub const ChartPattern = struct {
+    pattern_type: PatternType,
+    fg_color: u32 = Colors.black,
+    bg_color: u32 = Colors.white,
+
+    pub const PatternType = enum(u8) {
+        none = xlsxwriter.LXW_CHART_PATTERN_NONE,
+        percent_5 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_5,
+        percent_10 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_10,
+        percent_20 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_20,
+        percent_25 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_25,
+        percent_30 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_30,
+        percent_40 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_40,
+        percent_50 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_50,
+        percent_60 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_60,
+        percent_70 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_70,
+        percent_75 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_75,
+        percent_80 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_80,
+        percent_90 = xlsxwriter.LXW_CHART_PATTERN_PERCENT_90,
+        light_downward_diagonal = xlsxwriter.LXW_CHART_PATTERN_LIGHT_DOWNWARD_DIAGONAL,
+        light_upward_diagonal = xlsxwriter.LXW_CHART_PATTERN_LIGHT_UPWARD_DIAGONAL,
+        dark_downward_diagonal = xlsxwriter.LXW_CHART_PATTERN_DARK_DOWNWARD_DIAGONAL,
+        dark_upward_diagonal = xlsxwriter.LXW_CHART_PATTERN_DARK_UPWARD_DIAGONAL,
+        wide_downward_diagonal = xlsxwriter.LXW_CHART_PATTERN_WIDE_DOWNWARD_DIAGONAL,
+        wide_upward_diagonal = xlsxwriter.LXW_CHART_PATTERN_WIDE_UPWARD_DIAGONAL,
+        light_vertical = xlsxwriter.LXW_CHART_PATTERN_LIGHT_VERTICAL,
+        light_horizontal = xlsxwriter.LXW_CHART_PATTERN_LIGHT_HORIZONTAL,
+        narrow_vertical = xlsxwriter.LXW_CHART_PATTERN_NARROW_VERTICAL,
+        narrow_horizontal = xlsxwriter.LXW_CHART_PATTERN_NARROW_HORIZONTAL,
+        dark_vertical = xlsxwriter.LXW_CHART_PATTERN_DARK_VERTICAL,
+        dark_horizontal = xlsxwriter.LXW_CHART_PATTERN_DARK_HORIZONTAL,
+        dashed_downward_diagonal = xlsxwriter.LXW_CHART_PATTERN_DASHED_DOWNWARD_DIAGONAL,
+        dashed_upward_diagonal = xlsxwriter.LXW_CHART_PATTERN_DASHED_UPWARD_DIAGONAL,
+        dashed_horizontal = xlsxwriter.LXW_CHART_PATTERN_DASHED_HORIZONTAL,
+        dashed_vertical = xlsxwriter.LXW_CHART_PATTERN_DASHED_VERTICAL,
+        small_confetti = xlsxwriter.LXW_CHART_PATTERN_SMALL_CONFETTI,
+        large_confetti = xlsxwriter.LXW_CHART_PATTERN_LARGE_CONFETTI,
+        zigzag = xlsxwriter.LXW_CHART_PATTERN_ZIGZAG,
+        wave = xlsxwriter.LXW_CHART_PATTERN_WAVE,
+        diagonal_brick = xlsxwriter.LXW_CHART_PATTERN_DIAGONAL_BRICK,
+        horizontal_brick = xlsxwriter.LXW_CHART_PATTERN_HORIZONTAL_BRICK,
+        weave = xlsxwriter.LXW_CHART_PATTERN_WEAVE,
+        plaid = xlsxwriter.LXW_CHART_PATTERN_PLAID,
+        divot = xlsxwriter.LXW_CHART_PATTERN_DIVOT,
+        dotted_grid = xlsxwriter.LXW_CHART_PATTERN_DOTTED_GRID,
+        dotted_diamond = xlsxwriter.LXW_CHART_PATTERN_DOTTED_DIAMOND,
+        shingle = xlsxwriter.LXW_CHART_PATTERN_SHINGLE,
+        trellis = xlsxwriter.LXW_CHART_PATTERN_TRELLIS,
+        sphere = xlsxwriter.LXW_CHART_PATTERN_SPHERE,
+        small_grid = xlsxwriter.LXW_CHART_PATTERN_SMALL_GRID,
+        large_grid = xlsxwriter.LXW_CHART_PATTERN_LARGE_GRID,
+        small_check = xlsxwriter.LXW_CHART_PATTERN_SMALL_CHECK,
+        large_check = xlsxwriter.LXW_CHART_PATTERN_LARGE_CHECK,
+        outlined_diamond = xlsxwriter.LXW_CHART_PATTERN_OUTLINED_DIAMOND,
+        solid_diamond = xlsxwriter.LXW_CHART_PATTERN_SOLID_DIAMOND,
+    };
+
+    fn toNative(self: ChartPattern) xlsxwriter.lxw_chart_pattern {
+        return .{
+            .type = @intFromEnum(self.pattern_type),
+            .fg_color = self.fg_color,
+            .bg_color = self.bg_color,
         };
     }
 };
@@ -391,6 +465,16 @@ pub const ChartSeries = struct {
         _ = xlsxwriter.chart_series_set_points(self.inner, @ptrCast(native_points.ptr));
     }
 
+    pub fn setPattern(self: *ChartSeries, pattern: ChartPattern) !void {
+        var native_pattern = pattern.toNative();
+        _ = xlsxwriter.chart_series_set_pattern(self.inner, &native_pattern);
+    }
+
+    pub fn setLine(self: *ChartSeries, line: ChartLine) !void {
+        var native_line = line.toNative();
+        _ = xlsxwriter.chart_series_set_line(self.inner, &native_line);
+    }
+
     fn deinit(self: *ChartSeries) void {
         for (self.strings.items) |str| {
             var owned_str = str; // Make a mutable copy
@@ -447,6 +531,10 @@ pub const Chart = struct {
         return series;
     }
 
+    pub fn setSeriesGap(self: *Chart, gap: u16) void {
+        _ = xlsxwriter.chart_set_series_gap(self.inner, gap);
+    }
+
     pub fn setTitle(self: *Chart, title: []const u8) !void {
         const title_str = try self.allocator.dupeZ(u8, title);
         errdefer self.allocator.free(title_str);
@@ -459,11 +547,11 @@ pub const Chart = struct {
         _ = xlsxwriter.chart_title_set_name_font(self.inner, &native_font);
     }
 
-    pub fn setXAxisName(self: *Chart, name: []const u8) !void {
+    pub fn setXaxisName(self: *Chart, name: []const u8) !void {
         try self.setAxisName(.x_axis, name);
     }
 
-    pub fn setYAxisName(self: *Chart, name: []const u8) !void {
+    pub fn setYaxisName(self: *Chart, name: []const u8) !void {
         try self.setAxisName(.y_axis, name);
     }
 
@@ -477,12 +565,55 @@ pub const Chart = struct {
         _ = xlsxwriter.chart_axis_set_name(axis_ptr, name_str);
     }
 
+    pub fn setAxisNameFont(self: *Chart, axis: ChartAxis, font: ChartFont) void {
+        const axis_ptr = switch (axis) {
+            .x_axis => self.inner.x_axis,
+            .y_axis => self.inner.y_axis,
+        };
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_name_font(axis_ptr, &native_font);
+    }
+
+    pub fn setXaxisNameFont(self: *Chart, font: ChartFont) void {
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_name_font(self.inner.x_axis, &native_font);
+    }
+
+    pub fn setYaxisNameFont(self: *Chart, font: ChartFont) void {
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_name_font(self.inner.y_axis, &native_font);
+    }
+
+    pub fn setAxisNumFont(self: *Chart, axis: ChartAxis, font: ChartFont) void {
+        const axis_ptr = switch (axis) {
+            .x_axis => self.inner.x_axis,
+            .y_axis => self.inner.y_axis,
+        };
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_num_font(axis_ptr, &native_font);
+    }
+
+    pub fn setXaxisNumFont(self: *Chart, font: ChartFont) void {
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_num_font(self.inner.x_axis, &native_font);
+    }
+
+    pub fn setYaxisNumFont(self: *Chart, font: ChartFont) void {
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_axis_set_num_font(self.inner.y_axis, &native_font);
+    }
+
     pub fn setStyle(self: *Chart, style_id: u8) void {
         _ = xlsxwriter.chart_set_style(self.inner, style_id);
     }
 
     pub fn setLegendPosition(self: *Chart, position: ChartLegendPosition) void {
         _ = xlsxwriter.chart_legend_set_position(self.inner, position.toNative());
+    }
+
+    pub fn setLegendFont(self: *Chart, font: ChartFont) void {
+        var native_font = font.toNative();
+        _ = xlsxwriter.chart_legend_set_font(self.inner, &native_font);
     }
 
     pub fn setTable(self: *Chart) void {

@@ -102,3 +102,42 @@ test "Chart - all types support" {
         chart.setStyle(1);
     }
 }
+
+test "Chart - pattern and line customization" {
+    const allocator = testing.allocator;
+    const filename = "test_chart_pattern.xlsx";
+    // Ensure file doesn't exist at start
+    std.fs.cwd().deleteFile(filename) catch |err| switch (err) {
+        error.FileNotFound => {},
+        else => return err,
+    };
+
+    var workbook = try Workbook.create(allocator, filename);
+    defer {
+        _ = workbook.close() catch {};
+        workbook.deinit();
+        std.fs.cwd().deleteFile(filename) catch |err| {
+            std.debug.print("Failed to clean up test file: {}\n", .{err});
+        };
+    }
+
+    // Add a worksheet before creating charts
+    const worksheet = try workbook.addWorksheet("Sheet1");
+    _ = worksheet;
+
+    var chart = try Chart.init(allocator, workbook.workbook, .column);
+    defer chart.deinit();
+    var series = try chart.addSeries("=Sheet1!$A$1:$A$5", "=Sheet1!$B$1:$B$5");
+
+    try series.setPattern(.{
+        .pattern_type = .shingle,
+        .fg_color = 0x804000,
+        .bg_color = 0xC68C53,
+    });
+
+    try series.setLine(.{
+        .color = 0x804000,
+        .width = 0.0,
+        .dash_type = .solid,
+    });
+}

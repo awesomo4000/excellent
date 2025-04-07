@@ -16,6 +16,7 @@ pub const ChartType = @import("chart.zig").ChartType;
 pub const ChartFont = @import("chart.zig").ChartFont;
 pub const ChartLine = @import("chart.zig").ChartLine;
 pub const ChartFill = @import("chart.zig").ChartFill;
+pub const ChartPattern = @import("chart.zig").ChartPattern;
 pub const Colors = @import("colors.zig").Colors;
 pub const ChartSeries = @import("chart.zig").ChartSeries;
 pub const ChartDataLabel = @import("chart.zig").ChartDataLabel;
