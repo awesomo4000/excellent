@@ -24,6 +24,10 @@ def check_formulas(workbook, example_name):
     for sheet_name in workbook.sheetnames:
         sheet = workbook[sheet_name]
         
+        # Skip chartsheets as they don't have rows/cells
+        if isinstance(sheet, openpyxl.chartsheet.Chartsheet):
+            continue
+            
         for row_idx, row in enumerate(sheet.rows, 1):
             for col_idx, cell in enumerate(row, 1):
                 # Check for formula cells
@@ -68,6 +72,10 @@ def check_string_null_termination(workbook, example_name=None):
     for sheet_name in workbook.sheetnames:
         sheet = workbook[sheet_name]
         
+        # Skip chartsheets as they don't have rows/cells
+        if isinstance(sheet, openpyxl.chartsheet.Chartsheet):
+            continue
+            
         for row in sheet.rows:
             for cell in row:
                 # Check for string cells with null terminators
@@ -264,6 +272,10 @@ def check_row_visibility(example_name, reference_dir):
             
             ref_sheet = ref_wb[sheet_name]
             gen_sheet = gen_wb[sheet_name]
+            
+            # Skip chartsheets as they don't have rows
+            if isinstance(ref_sheet, openpyxl.chartsheet.Chartsheet) or isinstance(gen_sheet, openpyxl.chartsheet.Chartsheet):
+                continue
             
             # Get the maximum row number to check
             max_row = max(ref_sheet.max_row, gen_sheet.max_row)

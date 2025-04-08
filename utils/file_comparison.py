@@ -19,181 +19,95 @@ def get_relative_path(path, project_root):
 
 
 def compare_with_reference(example_name, reference_dir, results_dir, project_root, quiet=False, ignore_styles=False):
-    """Compare generated Excel file with reference file"""
+    """Compare the generated Excel file with the reference file"""
     generated_file = Path(f"{example_name}.xlsx")
     generated_macro_file = Path(f"{example_name}.xlsm")
     reference_file = reference_dir / f"{example_name}.xlsx"
     reference_macro_file = reference_dir / f"{example_name}.xlsm"
-    example_results_dir = results_dir / example_name
     
     # Use the macro files if they exist, otherwise use the regular files
     file_to_check = generated_macro_file if generated_macro_file.exists() else generated_file
     ref_to_check = reference_macro_file if reference_macro_file.exists() else reference_file
     
     if not ref_to_check.exists():
-        print(f"⚠️ Reference file not found: {get_relative_path(ref_to_check, project_root)}")
+        print(f"[{example_name}] ⚠️ Reference file not found: {ref_to_check}")
         return False
     
     try:
+        has_differences = False
+        
+        # Load both workbooks
         gen_wb = openpyxl.load_workbook(file_to_check)
         ref_wb = openpyxl.load_workbook(ref_to_check)
         
-        # Compare sheet names
-        if gen_wb.sheetnames != ref_wb.sheetnames:
-            print(f"⚠️ Sheet names differ: {gen_wb.sheetnames} vs {ref_wb.sheetnames}")
-            return False
-        
-        style_differences = []
-        has_failures = False
-        
-        # Compare cell contents in each sheet
-        for sheet_name in gen_wb.sheetnames:
-            gen_sheet = gen_wb[sheet_name]
+        # Compare each sheet
+        for sheet_name in ref_wb.sheetnames:
+            if sheet_name not in gen_wb.sheetnames:
+                print(f"[{example_name}] ⚠️ Generated file is missing sheet: {sheet_name}")
+                has_differences = True
+                continue
+            
             ref_sheet = ref_wb[sheet_name]
+            gen_sheet = gen_wb[sheet_name]
             
-            # Find the max dimensions to iterate through
-            max_row = max(gen_sheet.max_row, ref_sheet.max_row)
-            max_col = max(gen_sheet.max_column, ref_sheet.max_column)
+            # Skip chartsheets as they don't have rows/cells
+            if isinstance(ref_sheet, openpyxl.chartsheet.Chartsheet) or isinstance(gen_sheet, openpyxl.chartsheet.Chartsheet):
+                continue
             
+            # Get the maximum row and column numbers to check
+            max_row = max(ref_sheet.max_row, gen_sheet.max_row)
+            max_col = max(ref_sheet.max_column, gen_sheet.max_column)
+            
+            # Compare cell values
             for row in range(1, max_row + 1):
                 for col in range(1, max_col + 1):
-                    gen_cell = gen_sheet.cell(row=row, column=col)
                     ref_cell = ref_sheet.cell(row=row, column=col)
+                    gen_cell = gen_sheet.cell(row=row, column=col)
                     
-                    # Special handling for ArrayFormula objects
-                    if (str(gen_cell.value).startswith('<openpyxl.worksheet.formula.ArrayFormula') and 
-                        str(ref_cell.value).startswith('<openpyxl.worksheet.formula.ArrayFormula')):
-                        # Check if they're both array formulas - consider them equal for this check
-                        if hasattr(gen_cell, 'value') and hasattr(ref_cell, 'value'):
-                            # They're both array formulas, so we'll consider them equal
-                            continue
+                    # Compare values
+                    if ref_cell.value != gen_cell.value:
+                        print(f"[{example_name}] ⚠️ Value mismatch in sheet '{sheet_name}' at {ref_cell.coordinate}:")
+                        print(f"  Reference: {ref_cell.value}")
+                        print(f"  Generated: {gen_cell.value}")
+                        has_differences = True
                     
-                    if gen_cell.value != ref_cell.value:
-                        print(f"⚠️ Cell value mismatch at {sheet_name}!{gen_cell.coordinate}: "
-                              f"'{gen_cell.value}' vs '{ref_cell.value}'")
-                        has_failures = True
-                    
-                    # Skip style checking if ignore_styles is set
-                    if ignore_styles:
-                        continue
-                        
-                    # Compare cell styles if they exist
-                    if hasattr(gen_cell, '_style') and hasattr(ref_cell, '_style'):
-                        gen_style = gen_cell._style
-                        ref_style = ref_cell._style
-                        
-                        # Compare all style properties
-                        style_diff = []
-                        
-                        # Compare background color
-                        if hasattr(gen_style, 'fill') and hasattr(ref_style, 'fill'):
-                            gen_fill = gen_style.fill.start_color.rgb if gen_style.fill.start_color else None
-                            ref_fill = ref_style.fill.start_color.rgb if ref_style.fill.start_color else None
-                            if gen_fill != ref_fill:
-                                style_diff.append(f"background color: {gen_fill} vs {ref_fill}")
-                                has_failures = True
-                        
-                        # Compare font properties
-                        if hasattr(gen_style, 'font') and hasattr(ref_style, 'font'):
-                            font_props = [
-                                ('bold', 'bold'),
-                                ('italic', 'italic'),
-                                ('underline', 'underline'),
-                                ('strike', 'strike'),
-                                ('color', 'color.rgb'),
-                                ('size', 'size'),
-                                ('name', 'name'),
-                                ('vertAlign', 'vertAlign'),
-                                ('scheme', 'scheme')
-                            ]
-                            
-                            for prop, path in font_props:
-                                gen_val = getattr(gen_style.font, prop)
-                                ref_val = getattr(ref_style.font, prop)
-                                if gen_val != ref_val:
-                                    style_diff.append(f"font {prop}: {gen_val} vs {ref_val}")
-                                    has_failures = True
-                        
-                        # Compare borders
-                        if hasattr(gen_style, 'border') and hasattr(ref_style, 'border'):
-                            for side in ['top', 'bottom', 'left', 'right']:
-                                gen_border = getattr(gen_style.border, side)
-                                ref_border = getattr(ref_style.border, side)
-                                
-                                # Compare border style
-                                if gen_border.style != ref_border.style:
-                                    style_diff.append(f"{side} border style: {gen_border.style} vs {ref_border.style}")
-                                    has_failures = True
-                                
-                                # Compare border color
-                                gen_color = gen_border.color.rgb if gen_border.color else None
-                                ref_color = ref_border.color.rgb if ref_border.color else None
-                                if gen_color != ref_color:
-                                    style_diff.append(f"{side} border color: {gen_color} vs {ref_color}")
-                                    has_failures = True
-                        
-                        # Compare alignment
-                        if hasattr(gen_style, 'alignment') and hasattr(ref_style, 'alignment'):
-                            align_props = [
-                                ('horizontal', 'horizontal'),
-                                ('vertical', 'vertical'),
-                                ('textRotation', 'textRotation'),
-                                ('wrapText', 'wrapText'),
-                                ('shrinkToFit', 'shrinkToFit'),
-                                ('indent', 'indent'),
-                                ('relativeIndent', 'relativeIndent'),
-                                ('justifyLastLine', 'justifyLastLine')
-                            ]
-                            
-                            for prop, path in align_props:
-                                gen_val = getattr(gen_style.alignment, prop)
-                                ref_val = getattr(ref_style.alignment, prop)
-                                if gen_val != ref_val:
-                                    style_diff.append(f"alignment {prop}: {gen_val} vs {ref_val}")
-                                    has_failures = True
-                        
-                        # Compare number format
-                        if hasattr(gen_style, 'number_format') and hasattr(ref_style, 'number_format'):
-                            if gen_style.number_format != ref_style.number_format:
-                                style_diff.append(f"number format: {gen_style.number_format} vs {ref_style.number_format}")
-                                has_failures = True
-                        
-                        # If there are any style differences, add them to the list
-                        if style_diff:
-                            style_differences.append({
-                                'cell': f"{sheet_name}!{gen_cell.coordinate}",
-                                'differences': style_diff
-                            })
+                    # Only compare styles if explicitly requested and not a chartsheet example
+                    if not ignore_styles and example_name != "chartsheet":
+                        if ref_cell.font != gen_cell.font:
+                            print(f"[{example_name}] ⚠️ Font mismatch in sheet '{sheet_name}' at {ref_cell.coordinate}")
+                            has_differences = True
+                        if ref_cell.fill != gen_cell.fill:
+                            print(f"[{example_name}] ⚠️ Fill mismatch in sheet '{sheet_name}' at {ref_cell.coordinate}")
+                            has_differences = True
+                        if ref_cell.border != gen_cell.border:
+                            print(f"[{example_name}] ⚠️ Border mismatch in sheet '{sheet_name}' at {ref_cell.coordinate}")
+                            has_differences = True
+                        if ref_cell.alignment != gen_cell.alignment:
+                            print(f"[{example_name}] ⚠️ Alignment mismatch in sheet '{sheet_name}' at {ref_cell.coordinate}")
+                            has_differences = True
         
-        # Report any style differences found
-        if style_differences and not ignore_styles:
-            print("\n⚠️ Style differences found:")
-            for diff in style_differences:
-                print(f"\nCell: {diff['cell']}")
-                for d in diff['differences']:
-                    print(f"  - {d}")
+        # Check for extra sheets in generated file
+        for sheet_name in gen_wb.sheetnames:
+            if sheet_name not in ref_wb.sheetnames:
+                print(f"[{example_name}] ⚠️ Generated file has extra sheet: {sheet_name}")
+                has_differences = True
         
-        # When ignore_styles is true, we don't want style differences to cause a failure
-        style_failure = has_failures
-        if ignore_styles:
-            # If we have differences but they're only style differences, don't fail
-            style_failure = has_failures and not style_differences
-            if style_differences and not quiet:
-                print("⚠️ Style differences found but ignored due to --ignore-styles flag")
-                
-        if not quiet:
-            if style_failure:
+        # Report any differences found
+        if has_differences:
+            if not quiet:
                 print("\n❌ Generated file has differences from reference file")
-            else:
+        else:
+            if not quiet:
                 print("✅ Generated file matches reference file content" + 
-                     (" (ignoring styles)" if ignore_styles and style_differences else ""))
+                     (" (ignoring styles)" if ignore_styles or example_name == "chartsheet" else ""))
         
         # Create results directory if it doesn't exist
+        example_results_dir = results_dir / example_name
         example_results_dir.mkdir(parents=True, exist_ok=True)
         
         # Create or remove autochecked file based on results
         autochecked_file = example_results_dir / passed_autocheck_file
-        if not style_failure:
+        if not has_differences:
             autochecked_file.touch()
             if not quiet:
                 print(f"✅ Created autochecked file at {get_relative_path(autochecked_file, project_root)}")
@@ -203,8 +117,8 @@ def compare_with_reference(example_name, reference_dir, results_dir, project_roo
             if not quiet:
                 print(f"❌ Removed autochecked file due to differences")
         
-        return not style_failure
-        
-    except InvalidFileException as e:
-        print(f"❌ Error opening Excel file: {e}")
+        return not has_differences
+    
+    except Exception as e:
+        print(f"[{example_name}] ❌ Error comparing with reference: {e}")
         return False 

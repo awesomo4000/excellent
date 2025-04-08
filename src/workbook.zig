@@ -4,6 +4,7 @@ const error_utils = @import("error_utils.zig");
 const worksheet_mod = @import("worksheet.zig");
 const format_mod = @import("format.zig");
 const chart_mod = @import("chart.zig");
+const chartsheet_mod = @import("chartsheet.zig");
 
 pub const Workbook = struct {
     allocator: std.mem.Allocator,
@@ -12,6 +13,7 @@ pub const Workbook = struct {
     isOpen: bool = false,
     formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
     charts: std.ArrayList(*chart_mod.Chart) = std.ArrayList(*chart_mod.Chart).init(std.heap.page_allocator),
+    chartsheets: std.ArrayList(*chartsheet_mod.Chartsheet) = std.ArrayList(*chartsheet_mod.Chartsheet).init(std.heap.page_allocator),
 
     pub fn create(
         allocator: std.mem.Allocator,
@@ -29,6 +31,7 @@ pub const Workbook = struct {
             .isOpen = true,
             .formats = std.ArrayList(*format_mod.Format).init(allocator),
             .charts = std.ArrayList(*chart_mod.Chart).init(allocator),
+            .chartsheets = std.ArrayList(*chartsheet_mod.Chartsheet).init(allocator),
         };
 
         return workbook;
@@ -59,6 +62,12 @@ pub const Workbook = struct {
             self.allocator.destroy(chart);
         }
         self.charts.deinit();
+        // deinit the chartsheets
+        for (self.chartsheets.items) |chartsheet| {
+            chartsheet.deinit();
+            self.allocator.destroy(chartsheet);
+        }
+        self.chartsheets.deinit();
         self.allocator.destroy(self);
     }
 
@@ -109,5 +118,16 @@ pub const Workbook = struct {
 
         const result = c.workbook_add_vba_project(self.workbook, c_path.ptr);
         if (result != c.LXW_NO_ERROR) return error_utils.translateErrorCode(result);
+    }
+
+    pub fn addChartsheet(self: *Workbook, name: ?[]const u8) !chartsheet_mod.Chartsheet {
+        const name_ptr = if (name) |n| n.ptr else null;
+        const chartsheet = c.workbook_add_chartsheet(self.workbook, name_ptr);
+        if (chartsheet == null) return error.ChartsheetCreationFailed;
+
+        return chartsheet_mod.Chartsheet{
+            .workbook = self,
+            .chartsheet = chartsheet,
+        };
     }
 };
