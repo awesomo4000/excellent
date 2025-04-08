@@ -73,3 +73,27 @@ pub const cell = struct {
         return (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z');
     }
 };
+
+const Positions = struct {
+    start_row: u32,
+    start_col: u16,
+    end_row: u32,
+    end_col: u16,
+};
+
+pub fn rangeToPositions(range: []const u8) !Positions {
+    var iter = std.mem.splitScalar(u8, range, ':');
+    const start = iter.next() orelse return error.InvalidRange;
+    const end = iter.next() orelse return error.InvalidRange;
+
+    if (iter.next() != null) return error.TooManyColonsInRange;
+
+    const start_pos = try cell.strToRowCol(start);
+    const end_pos = try cell.strToRowCol(end);
+    return .{
+        .start_row = start_pos.row,
+        .start_col = start_pos.col,
+        .end_row = end_pos.row,
+        .end_col = end_pos.col,
+    };
+}

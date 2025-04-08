@@ -5,7 +5,7 @@ const cell_utils = @import("cell_utils.zig");
 const styled = @import("styled.zig");
 const chart = @import("chart.zig");
 const comment = @import("comment.zig");
-
+const cf = @import("conditional_format.zig");
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
     workbook: *@import("workbook.zig").Workbook,
@@ -784,5 +784,41 @@ pub const Worksheet = struct {
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);
         try self.insertButton(pos.row, pos.col, options);
+    }
+
+    pub fn conditionalFormatRange(
+        self: *Worksheet,
+        range: []const u8,
+        format: cf.ConditionalFormat,
+    ) !void {
+        const pos = try cell_utils.rangeToPositions(range);
+        const conditional_format_ptr = try self.workbook.addConditionalFormat(format);
+        const result = c.worksheet_conditional_format_range(
+            self.worksheet,
+            pos.start_row,
+            pos.start_col,
+            pos.end_row,
+            pos.end_col,
+            &conditional_format_ptr.inner,
+        );
+        if (result != c.LXW_NO_ERROR) return error.ConditionalFormatFailed;
+    }
+
+    pub fn conditionalFormatCell(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        format: cf.ConditionalFormat,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        const conditional_format_ptr: *cf.ConditionalFormat =
+            try self.workbook.addConditionalFormat(format);
+
+        const result = c.worksheet_conditional_format_cell(
+            self.worksheet,
+            pos.row,
+            pos.col,
+            &conditional_format_ptr.inner,
+        );
+        if (result != c.LXW_NO_ERROR) return error.ConditionalFormatFailed;
     }
 };

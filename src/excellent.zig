@@ -26,6 +26,8 @@ pub const CommentOptions = @import("comment.zig").CommentOptions;
 pub const TmpFile = @import("mktmp.zig").TmpFile;
 pub const chart = @import("chart.zig");
 pub const Chartsheet = @import("chartsheet.zig").Chartsheet;
+pub const ConditionalFormat = @import("conditional_format.zig").ConditionalFormat;
+pub const cf = @import("conditional_format.zig");
 /// Excel DateTime representation
 pub const DateTime = struct {
     year: u16 = 0,

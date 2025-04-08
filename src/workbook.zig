@@ -5,7 +5,7 @@ const worksheet_mod = @import("worksheet.zig");
 const format_mod = @import("format.zig");
 const chart_mod = @import("chart.zig");
 const chartsheet_mod = @import("chartsheet.zig");
-
+const cf = @import("conditional_format.zig");
 pub const Workbook = struct {
     allocator: std.mem.Allocator,
     filename: []const u8,
@@ -14,7 +14,7 @@ pub const Workbook = struct {
     formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
     charts: std.ArrayList(*chart_mod.Chart) = std.ArrayList(*chart_mod.Chart).init(std.heap.page_allocator),
     chartsheets: std.ArrayList(*chartsheet_mod.Chartsheet) = std.ArrayList(*chartsheet_mod.Chartsheet).init(std.heap.page_allocator),
-
+    conditional_formats: std.ArrayList(*cf.ConditionalFormat) = std.ArrayList(*cf.ConditionalFormat).init(std.heap.page_allocator),
     pub fn create(
         allocator: std.mem.Allocator,
         filename: []const u8,
@@ -32,6 +32,7 @@ pub const Workbook = struct {
             .formats = std.ArrayList(*format_mod.Format).init(allocator),
             .charts = std.ArrayList(*chart_mod.Chart).init(allocator),
             .chartsheets = std.ArrayList(*chartsheet_mod.Chartsheet).init(allocator),
+            .conditional_formats = std.ArrayList(*cf.ConditionalFormat).init(allocator),
         };
 
         return workbook;
@@ -68,6 +69,12 @@ pub const Workbook = struct {
             self.allocator.destroy(chartsheet);
         }
         self.chartsheets.deinit();
+        // deinit the conditional formats
+        for (self.conditional_formats.items) |conditional_format| {
+            conditional_format.deinit();
+            self.allocator.destroy(conditional_format);
+        }
+        self.conditional_formats.deinit();
         self.allocator.destroy(self);
     }
 
@@ -94,6 +101,13 @@ pub const Workbook = struct {
         chart.* = try chart_mod.Chart.init(self.allocator, self.workbook, chart_type);
         try self.charts.append(chart);
         return chart;
+    }
+
+    pub fn addConditionalFormat(self: *Workbook, format: cf.ConditionalFormat) !*cf.ConditionalFormat {
+        const conditional_format = try self.allocator.create(cf.ConditionalFormat);
+        conditional_format.* = format;
+        try self.conditional_formats.append(conditional_format);
+        return conditional_format;
     }
 
     pub fn addWorksheet(self: *Workbook, name: ?[]const u8) !worksheet_mod.Worksheet {
