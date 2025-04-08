@@ -18,6 +18,11 @@ pub const Worksheet = struct {
         self.workbook = undefined;
     }
 
+    /// Set the zoom level for the worksheet (10-400)
+    pub fn setZoom(self: *Worksheet, zoom: u16) void {
+        _ = c.worksheet_set_zoom(self.worksheet, zoom);
+    }
+
     /// Write a string to a cell, optionally with formatting
     pub fn writeString(
         self: *Worksheet,

@@ -12,6 +12,10 @@ pub const ChartType = enum {
     line_stacked_percent,
     pie,
     scatter,
+    scatter_straight,
+    scatter_straight_with_markers,
+    scatter_smooth,
+    scatter_smooth_with_markers,
     area,
     area_stacked,
     area_stacked_percent,
@@ -27,21 +31,41 @@ pub const ChartType = enum {
             .column => @intCast(xlsxwriter.LXW_CHART_COLUMN),
             .bar => @intCast(xlsxwriter.LXW_CHART_BAR),
             .bar_stacked => @intCast(xlsxwriter.LXW_CHART_BAR_STACKED),
-            .bar_stacked_percent => @intCast(xlsxwriter.LXW_CHART_BAR_STACKED_PERCENT),
+            .bar_stacked_percent => @intCast(
+                xlsxwriter.LXW_CHART_BAR_STACKED_PERCENT,
+            ),
             .line => @intCast(xlsxwriter.LXW_CHART_LINE),
             .line_stacked => @intCast(xlsxwriter.LXW_CHART_LINE_STACKED),
-            .line_stacked_percent => @intCast(xlsxwriter.LXW_CHART_LINE_STACKED_PERCENT),
+            .line_stacked_percent => @intCast(
+                xlsxwriter.LXW_CHART_LINE_STACKED_PERCENT,
+            ),
             .pie => @intCast(xlsxwriter.LXW_CHART_PIE),
-            .scatter => @intCast(xlsxwriter.LXW_CHART_SCATTER),
             .area => @intCast(xlsxwriter.LXW_CHART_AREA),
             .area_stacked => @intCast(xlsxwriter.LXW_CHART_AREA_STACKED),
-            .area_stacked_percent => @intCast(xlsxwriter.LXW_CHART_AREA_STACKED_PERCENT),
+            .area_stacked_percent => @intCast(
+                xlsxwriter.LXW_CHART_AREA_STACKED_PERCENT,
+            ),
             .radar => @intCast(xlsxwriter.LXW_CHART_RADAR),
-            .radar_with_markers => @intCast(xlsxwriter.LXW_CHART_RADAR_WITH_MARKERS),
+            .radar_with_markers => @intCast(
+                xlsxwriter.LXW_CHART_RADAR_WITH_MARKERS,
+            ),
             .radar_filled => @intCast(xlsxwriter.LXW_CHART_RADAR_FILLED),
             .doughnut => @intCast(xlsxwriter.LXW_CHART_DOUGHNUT),
             .column_stacked => @intCast(xlsxwriter.LXW_CHART_COLUMN_STACKED),
-            .column_stacked_percent => @intCast(xlsxwriter.LXW_CHART_COLUMN_STACKED_PERCENT),
+            .column_stacked_percent => @intCast(
+                xlsxwriter.LXW_CHART_COLUMN_STACKED_PERCENT,
+            ),
+            .scatter => @intCast(xlsxwriter.LXW_CHART_SCATTER),
+            .scatter_straight => @intCast(
+                xlsxwriter.LXW_CHART_SCATTER_STRAIGHT,
+            ),
+            .scatter_straight_with_markers => @intCast(
+                xlsxwriter.LXW_CHART_SCATTER_STRAIGHT_WITH_MARKERS,
+            ),
+            .scatter_smooth => @intCast(xlsxwriter.LXW_CHART_SCATTER_SMOOTH),
+            .scatter_smooth_with_markers => @intCast(
+                xlsxwriter.LXW_CHART_SCATTER_SMOOTH_WITH_MARKERS,
+            ),
         };
     }
 };
