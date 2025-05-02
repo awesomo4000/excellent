@@ -2,36 +2,36 @@ const std = @import("std");
 const Format = @import("format.zig").Format;
 const c = @import("xlsxwriter");
 
-const CellCriteria = enum {
-    equal_to,
-    not_equal_to,
-    greater_than,
-    less_than,
-    greater_than_or_equal_to,
-    less_than_or_equal_to,
-};
+// const CellCriteria = enum {
+//     equal_to,
+//     not_equal_to,
+//     greater_than,
+//     less_than,
+//     greater_than_or_equal_to,
+//     less_than_or_equal_to,
+// };
 
-const TimePeriodCriteria = enum {
-    yesterday,
-    today,
-    tomorrow,
-    last_week,
-    this_week,
-};
+// const TimePeriodCriteria = enum {
+//     yesterday,
+//     today,
+//     tomorrow,
+//     last_week,
+//     this_week,
+// };
 
-const TextCriteria = enum {
-    contains,
-    not_contains,
-    starts_with,
-    ends_with,
-};
+// const TextCriteria = enum {
+//     contains,
+//     not_contains,
+//     starts_with,
+//     ends_with,
+// };
 
-const AverageCriteria = enum {
-    above,
-    below,
-    above_or_equal,
-    below_or_equal,
-};
+// const AverageCriteria = enum {
+//     above,
+//     below,
+//     above_or_equal,
+//     below_or_equal,
+// };
 
 pub const ConditionalFormat = struct {
     inner: c.lxw_conditional_format,
@@ -40,10 +40,19 @@ pub const ConditionalFormat = struct {
             .inner = std.mem.zeroes(c.lxw_conditional_format),
         };
     }
-    pub fn setStopIfTrue(self: *ConditionalFormat, stop_if_true: bool) void {
-        self.inner.stop_if_true = if (stop_if_true) c.LXW_TRUE else c.LXW_FALSE;
+
+    pub fn setStopIfTrue(
+        self: *ConditionalFormat,
+        stop_if_true: bool,
+    ) void {
+        self.inner.stop_if_true =
+            if (stop_if_true) c.LXW_TRUE else c.LXW_FALSE;
     }
-    pub fn setFormat(self: *ConditionalFormat, format: ?*Format) void {
+
+    pub fn setFormat(
+        self: *ConditionalFormat,
+        format: ?*Format,
+    ) void {
         self.inner.format = format.?.format;
     }
     pub fn deinit(self: *ConditionalFormat) void {
@@ -51,7 +60,10 @@ pub const ConditionalFormat = struct {
     }
 };
 
-pub fn cellEqual(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellEqual(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_EQUAL_TO;
@@ -60,7 +72,10 @@ pub fn cellEqual(value: f64, format: ?*Format) ConditionalFormat {
     return f;
 }
 
-pub fn cellNotEqual(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellNotEqual(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_NOT_EQUAL_TO;
@@ -69,25 +84,36 @@ pub fn cellNotEqual(value: f64, format: ?*Format) ConditionalFormat {
     return f;
 }
 
-pub fn cellGreaterThan(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellGreaterThan(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_GREATER_THAN;
+    f.inner.criteria =
+        c.LXW_CONDITIONAL_CRITERIA_GREATER_THAN;
     f.inner.value = value;
     f.setFormat(format);
     return f;
 }
 
-pub fn cellGreaterThanOrEqualTo(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellGreaterThanOrEqualTo(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_GREATER_THAN_OR_EQUAL_TO;
+    f.inner.criteria =
+        c.LXW_CONDITIONAL_CRITERIA_GREATER_THAN_OR_EQUAL_TO;
     f.inner.value = value;
     f.setFormat(format);
     return f;
 }
 
-pub fn cellLessThan(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellLessThan(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_LESS_THAN;
@@ -96,16 +122,24 @@ pub fn cellLessThan(value: f64, format: ?*Format) ConditionalFormat {
     return f;
 }
 
-pub fn cellLessThanOrEqualTo(value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellLessThanOrEqualTo(
+    value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_LESS_THAN_OR_EQUAL_TO;
+    f.inner.criteria =
+        c.LXW_CONDITIONAL_CRITERIA_LESS_THAN_OR_EQUAL_TO;
     f.inner.value = value;
     f.setFormat(format);
     return f;
 }
 
-pub fn cellBetween(min_value: f64, max_value: f64, format: ?*Format) ConditionalFormat {
+pub fn cellBetween(
+    min_value: f64,
+    max_value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_BETWEEN;
@@ -115,7 +149,11 @@ pub fn cellBetween(min_value: f64, max_value: f64, format: ?*Format) Conditional
     return f;
 }
 
-pub fn cellNotBetween(min_value: f64, max_value: f64, format: ?Format) ConditionalFormat {
+pub fn cellNotBetween(
+    min_value: f64,
+    max_value: f64,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_CELL;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_NOT_BETWEEN;
@@ -125,7 +163,7 @@ pub fn cellNotBetween(min_value: f64, max_value: f64, format: ?Format) Condition
     return f;
 }
 
-pub fn timePeriodYesterday(format: ?Format) ConditionalFormat {
+pub fn timePeriodYesterday(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_YESTERDAY;
@@ -133,7 +171,7 @@ pub fn timePeriodYesterday(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodToday(format: ?Format) ConditionalFormat {
+pub fn timePeriodToday(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_TODAY;
@@ -141,7 +179,7 @@ pub fn timePeriodToday(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodTomorrow(format: ?Format) ConditionalFormat {
+pub fn timePeriodTomorrow(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_TOMORROW;
@@ -149,7 +187,7 @@ pub fn timePeriodTomorrow(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodLastWeek(format: ?Format) ConditionalFormat {
+pub fn timePeriodLastWeek(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_LAST_WEEK;
@@ -157,7 +195,7 @@ pub fn timePeriodLastWeek(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodThisWeek(format: ?Format) ConditionalFormat {
+pub fn timePeriodThisWeek(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_THIS_WEEK;
@@ -165,7 +203,7 @@ pub fn timePeriodThisWeek(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodNextWeek(format: ?Format) ConditionalFormat {
+pub fn timePeriodNextWeek(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_NEXT_WEEK;
@@ -173,7 +211,7 @@ pub fn timePeriodNextWeek(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn timePeriodLastMonth(format: ?Format) ConditionalFormat {
+pub fn timePeriodLastMonth(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TIME_PERIOD;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_LAST_MONTH;
@@ -181,7 +219,10 @@ pub fn timePeriodLastMonth(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn textContains(text: []const u8, format: ?Format) ConditionalFormat {
+pub fn textContains(
+    text: []const u8,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TEXT;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_CONTAINS;
@@ -190,7 +231,10 @@ pub fn textContains(text: []const u8, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn textNotContaining(text: []const u8, format: ?Format) ConditionalFormat {
+pub fn textNotContaining(
+    text: []const u8,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TEXT;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_NOT_CONTAINS;
@@ -199,7 +243,10 @@ pub fn textNotContaining(text: []const u8, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn textStartsWith(text: []const u8, format: ?Format) ConditionalFormat {
+pub fn textStartsWith(
+    text: []const u8,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TEXT;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_STARTS_WITH;
@@ -208,7 +255,10 @@ pub fn textStartsWith(text: []const u8, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn textEndsWith(text: []const u8, format: ?Format) ConditionalFormat {
+pub fn textEndsWith(
+    text: []const u8,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TEXT;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_ENDS_WITH;
@@ -217,39 +267,41 @@ pub fn textEndsWith(text: []const u8, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn averageAbove(format: ?Format) ConditionalFormat {
+pub fn averageAbove(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_ABOVE;
+    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_AVERAGE_ABOVE;
     f.setFormat(format);
     return f;
 }
 
-pub fn averageBelow(format: ?Format) ConditionalFormat {
+pub fn averageBelow(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_BELOW;
+    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_AVERAGE_BELOW;
     f.setFormat(format);
     return f;
 }
 
-pub fn averageAboveOrEqual(format: ?Format) ConditionalFormat {
+pub fn averageAboveOrEqual(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_ABOVE_OR_EQUAL_TO;
+    f.inner.criteria =
+        c.LXW_CONDITIONAL_CRITERIA_AVERAGE_ABOVE_OR_EQUAL_TO;
     f.setFormat(format);
     return f;
 }
 
-pub fn averageBelowOrEqual(format: ?Format) ConditionalFormat {
+pub fn averageBelowOrEqual(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
-    f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_BELOW_OR_EQUAL_TO;
+    f.inner.criteria =
+        c.LXW_CONDITIONAL_CRITERIA_AVERAGE_BELOW_OR_EQUAL_TO;
     f.setFormat(format);
     return f;
 }
 
-pub fn average_1_StdDevAbove(format: ?Format) ConditionalFormat {
+pub fn average_1_StdDevAbove(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_1_STD_DEV_ABOVE;
@@ -257,7 +309,7 @@ pub fn average_1_StdDevAbove(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn average_1_StdDevBelow(format: ?Format) ConditionalFormat {
+pub fn average_1_StdDevBelow(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_1_STD_DEV_BELOW;
@@ -265,7 +317,7 @@ pub fn average_1_StdDevBelow(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn average_2_StdDevAbove(format: ?Format) ConditionalFormat {
+pub fn average_2_StdDevAbove(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_2_STD_DEV_ABOVE;
@@ -273,7 +325,7 @@ pub fn average_2_StdDevAbove(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn average_2_StdDevBelow(format: ?Format) ConditionalFormat {
+pub fn average_2_StdDevBelow(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_2_STD_DEV_BELOW;
@@ -281,7 +333,7 @@ pub fn average_2_StdDevBelow(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn average_3_StdDevAbove(format: ?Format) ConditionalFormat {
+pub fn average_3_StdDevAbove(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_3_STD_DEV_ABOVE;
@@ -289,7 +341,7 @@ pub fn average_3_StdDevAbove(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn average_3_StdDevBelow(format: ?Format) ConditionalFormat {
+pub fn average_3_StdDevBelow(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_AVERAGE;
     f.inner.criteria = c.LXW_CONDITIONAL_CRITERIA_3_STD_DEV_BELOW;
@@ -297,21 +349,21 @@ pub fn average_3_StdDevBelow(format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn duplicate(format: ?Format) ConditionalFormat {
+pub fn duplicate(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_DUPLICATE;
     f.setFormat(format);
     return f;
 }
 
-pub fn unique(format: ?Format) ConditionalFormat {
+pub fn unique(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_UNIQUE;
     f.setFormat(format);
     return f;
 }
 
-pub fn top(value: f64, format: ?Format) ConditionalFormat {
+pub fn top(value: f64, format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_TOP;
     f.inner.value = value;
@@ -319,7 +371,7 @@ pub fn top(value: f64, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn bottom(value: f64, format: ?Format) ConditionalFormat {
+pub fn bottom(value: f64, format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_BOTTOM;
     f.inner.value = value;
@@ -327,35 +379,38 @@ pub fn bottom(value: f64, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn blank(format: ?Format) ConditionalFormat {
+pub fn blank(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_BLANKS;
     f.setFormat(format);
     return f;
 }
 
-pub fn notBlank(format: ?Format) ConditionalFormat {
+pub fn notBlank(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_NOT_BLANKS;
     f.setFormat(format);
     return f;
 }
 
-pub fn errors(format: ?Format) ConditionalFormat {
+pub fn errors(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_ERRORS;
     f.setFormat(format);
     return f;
 }
 
-pub fn notErrors(format: ?Format) ConditionalFormat {
+pub fn notErrors(format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_NOT_ERRORS;
     f.setFormat(format);
     return f;
 }
 
-pub fn formula(formula_str: []const u8, format: ?Format) ConditionalFormat {
+pub fn formula(
+    formula_str: []const u8,
+    format: ?*Format,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_FORMULA;
     f.inner.formula = formula_str;
@@ -363,24 +418,110 @@ pub fn formula(formula_str: []const u8, format: ?Format) ConditionalFormat {
     return f;
 }
 
-pub fn twoColorScale(format: ?Format) ConditionalFormat {
+pub const TwoColorScaleOpts = struct {
+    min_color: u32,
+    max_color: u32,
+};
+
+pub fn twoColorScale(opts: ?TwoColorScaleOpts, format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_2_COLOR_SCALE;
+    if (opts) |o| {
+        f.inner.min_color = o.min_color;
+        f.inner.max_color = o.max_color;
+    }
     f.setFormat(format);
     return f;
 }
 
-pub fn threeColorScale(format: ?Format) ConditionalFormat {
+pub const ThreeColorScaleOpts = struct {
+    min_color: u32,
+    mid_color: u32,
+    max_color: u32,
+};
+
+pub fn threeColorScale(opts: ?ThreeColorScaleOpts, format: ?*Format) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_3_COLOR_SCALE;
+    if (opts) |o| {
+        f.inner.min_color = o.min_color;
+        f.inner.mid_color = o.mid_color;
+        f.inner.max_color = o.max_color;
+    }
     f.setFormat(format);
     return f;
 }
 
-pub fn dataBar(format: ?Format) ConditionalFormat {
+pub const BarAxisPosition = enum {
+    automatic,
+    midpoint,
+    none,
+
+    pub fn toC(self: BarAxisPosition) c.lxw_conditional_bar_axis_position {
+        return switch (self) {
+            .automatic => c.LXW_CONDITIONAL_BAR_AXIS_AUTOMATIC,
+            .midpoint => c.LXW_CONDITIONAL_BAR_AXIS_MIDPOINT,
+            .none => c.LXW_CONDITIONAL_BAR_AXIS_NONE,
+        };
+    }
+};
+
+pub const BarDirection = enum {
+    context,
+    right_to_left,
+    left_to_right,
+
+    pub fn toC(self: BarDirection) c.lxw_conditional_bar_direction {
+        return switch (self) {
+            .context => c.LXW_CONDITIONAL_BAR_DIRECTION_CONTEXT,
+            .right_to_left => c.LXW_CONDITIONAL_BAR_DIRECTION_RIGHT_TO_LEFT,
+            .left_to_right => c.LXW_CONDITIONAL_BAR_DIRECTION_LEFT_TO_RIGHT,
+        };
+    }
+};
+
+pub const DataBarOpts = struct {
+    bar_axis_color: ?u32 = null,
+    bar_axis_position: ?BarAxisPosition = null,
+    bar_border_color: ?u32 = null,
+    bar_color: ?u32 = null,
+    bar_direction: ?BarDirection = null,
+    bar_negative_border_color: ?u32 = null,
+    bar_negative_border_color_same: ?bool = null,
+    bar_negative_color: ?u32 = null,
+    bar_negative_color_same: ?bool = null,
+    bar_no_border: ?bool = null,
+    bar_only: ?bool = null,
+    data_bar_2010: ?bool = null,
+    max_rule_type: ?c.lxw_conditional_rule_type = null,
+    max_value: ?f64 = null,
+    max_value_string: ?[]const u8 = null,
+    min_rule_type: ?c.lxw_conditional_rule_type = null,
+    min_value: ?f64 = null,
+    min_value_string: ?[]const u8 = null,
+};
+
+pub fn dataBar(opts: ?DataBarOpts) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_DATA_BAR;
-    f.setFormat(format);
+    if (opts) |o| {
+        f.inner.bar_only = o.bar_only orelse false;
+        if (o.bar_color) |color| {
+            if (color == false) {
+                f.inner.bar_color = c.LXW_COLOR_UNSET;
+            } else {
+                f.inner.bar_color = color;
+            }
+        }
+        if (o.bar_border_color) |color| {
+            if (color == false) {
+                f.inner.bar_border_color = c.LXW_COLOR_UNSET;
+            } else {
+                f.inner.bar_border_color = color;
+            }
+        }
+        f.inner.bar_solid = o.bar_solid orelse false;
+    }
     return f;
 }
 
@@ -432,7 +573,10 @@ pub const IconSetOpts = struct {
     reverse_icons: ?bool = null,
 };
 
-pub fn iconSet(format: ?Format, opts: ?IconSetOpts) ConditionalFormat {
+pub fn iconSet(
+    format: ?*Format,
+    opts: ?IconSetOpts,
+) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_ICON_SETS;
     f.setFormat(format);

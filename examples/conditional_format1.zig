@@ -18,24 +18,21 @@ pub fn main() !void {
     var worksheet = try workbook.addWorksheet("Sheet1");
 
     // Write some sample numbers
-    try worksheet.writeNumber(0, 1, 10, null); // B1
-    try worksheet.writeNumber(1, 1, 20, null); // B2
-    try worksheet.writeNumber(2, 1, 30, null); // B3
-    try worksheet.writeNumber(3, 1, 40, null); // B4
-    try worksheet.writeNumber(4, 1, 50, null); // B5
-    try worksheet.writeNumber(5, 1, 60, null); // B6
-    try worksheet.writeNumber(6, 1, 70, null); // B7
-    try worksheet.writeNumber(7, 1, 80, null); // B8
-    try worksheet.writeNumber(8, 1, 90, null); // B9
+    try worksheet.writeNumber(0, 1, 34, null); // B1
+    try worksheet.writeNumber(1, 1, 32, null); // B2
+    try worksheet.writeNumber(2, 1, 31, null); // B3
+    try worksheet.writeNumber(3, 1, 35, null); // B4
+    try worksheet.writeNumber(4, 1, 36, null); // B5
+    try worksheet.writeNumber(5, 1, 30, null); // B6
+    try worksheet.writeNumber(6, 1, 38, null); // B7
+    try worksheet.writeNumber(7, 1, 38, null); // B8
+    try worksheet.writeNumber(8, 1, 32, null); // B9
 
     // Create a format with red text
     var format = try workbook.addFormat();
     _ = format.setFontColor(excel.Colors.red);
-
-    try worksheet.conditionalFormatRange(
-        "B1:B9",
-        cf.cellLessThan(33, format),
-    );
+    const condition = cf.cellLessThan(33, format);
+    try worksheet.conditionalFormatRange("B1:B9", condition);
 
     // Save the workbook
     try workbook.close();
