@@ -170,7 +170,7 @@ pub fn main() !void {
     try worksheet6.writeString(
         0,
         0,
-        "Cells with values >= 50 are in light red. " ++
+        "Cells with values >= 50 are in light red." ++
             "Values < 50 are in light green. " ++
             "Non-contiguous ranges.",
         null,
