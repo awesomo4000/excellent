@@ -245,7 +245,7 @@ pub const Worksheet = struct {
         format: ?*format_mod.Format,
     ) !void {
         const format_ptr = if (format) |f| f.format else null;
-        const datetime_mut = datetime.toC(); // use to avoid const cast err
+        var datetime_mut = datetime.toC(); // use to avoid const cast err
         const result = c.worksheet_write_datetime(
             self.worksheet,
             @intCast(row),
