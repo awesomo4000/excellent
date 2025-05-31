@@ -6,6 +6,8 @@ const styled = @import("styled.zig");
 const chart = @import("chart.zig");
 const comment = @import("comment.zig");
 const cf = @import("conditional_format.zig");
+const DateTime = @import("date_time.zig").DateTime;
+
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
     workbook: *@import("workbook.zig").Workbook,
@@ -239,15 +241,16 @@ pub const Worksheet = struct {
         self: *Worksheet,
         row: usize,
         col: usize,
-        datetime: *c.lxw_datetime,
+        datetime: DateTime,
         format: ?*format_mod.Format,
     ) !void {
         const format_ptr = if (format) |f| f.format else null;
+        const datetime_mut = datetime.toC(); // use to avoid const cast err
         const result = c.worksheet_write_datetime(
             self.worksheet,
             @intCast(row),
             @intCast(col),
-            datetime,
+            &datetime_mut,
             format_ptr,
         );
         if (result != c.LXW_NO_ERROR) return error.WriteFailed;
@@ -257,7 +260,7 @@ pub const Worksheet = struct {
     pub fn writeDateTimeCell(
         self: *Worksheet,
         cell_ref: []const u8,
-        datetime: *c.lxw_datetime,
+        datetime: DateTime,
         format: ?*format_mod.Format,
     ) !void {
         const pos = try cell_utils.cell.strToRowCol(cell_ref);

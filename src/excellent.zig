@@ -21,6 +21,7 @@ pub const Colors = @import("colors.zig").Colors;
 pub const ChartSeries = @import("chart.zig").ChartSeries;
 pub const ChartDataLabel = @import("chart.zig").ChartDataLabel;
 pub const DataLabelOptions = @import("chart.zig").DataLabelOptions;
+pub const DateTime = @import("date_time.zig").DateTime;
 pub const DiagonalType = @import("format.zig").DiagonalType;
 pub const CommentOptions = @import("comment.zig").CommentOptions;
 pub const TmpFile = @import("mktmp.zig").TmpFile;
@@ -28,42 +29,6 @@ pub const chart = @import("chart.zig");
 pub const Chartsheet = @import("chartsheet.zig").Chartsheet;
 pub const ConditionalFormat = @import("conditional_format.zig").ConditionalFormat;
 pub const cf = @import("conditional_format.zig");
-/// Excel DateTime representation
-pub const DateTime = struct {
-    year: u16 = 0,
-    month: u8 = 0,
-    day: u8 = 0,
-    hour: u8 = 0,
-    min: u8 = 0,
-    sec: f64 = 0,
-
-    /// Convert to lxw_datetime for internal use
-    pub fn toLxwDateTime(self: DateTime) @import("xlsxwriter").lxw_datetime {
-        return @import("xlsxwriter").lxw_datetime{
-            .year = self.year,
-            .month = self.month,
-            .day = self.day,
-            .hour = self.hour,
-            .min = self.min,
-            .sec = self.sec,
-        };
-    }
-};
-
-// Helper function to convert a double timestamp to lxw_datetime
-// Place in appropriate module later if functionality expands
-pub fn dateTimeToLxwDateTime(_: f64) @import("xlsxwriter").lxw_datetime {
-    // This is a simplified implementation
-    // In a real application, you would convert from a standard datetime format
-    return @import("xlsxwriter").lxw_datetime{
-        .year = 2023,
-        .month = 1,
-        .day = 1,
-        .hour = 0,
-        .min = 0,
-        .sec = 0,
-    };
-}
 
 // Include all test files in the test build
 comptime {
