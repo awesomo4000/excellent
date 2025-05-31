@@ -91,9 +91,9 @@ pub fn main() !void {
     // Create AppleScript command
     const apple_script = try std.fmt.allocPrint(
         allocator,
-        \\set displaySize to do shell script "system_profiler SPDisplaysDataType | grep Resolution | head -1"
-        \\set screenWidth to word 2 of displaySize
-        \\set screenHeight to word 4 of displaySize
+        \\set displaySize to do shell script "system_profiler SPDisplaysDataType | grep 'UI Looks like:' | head -1"
+        \\set screenWidth to word 4 of displaySize
+        \\set screenHeight to word 6 of displaySize
         \\set gap to 0
         \\set halfGap to gap / 2
         \\tell application "Microsoft Excel"

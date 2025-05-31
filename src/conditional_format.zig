@@ -423,14 +423,13 @@ pub const TwoColorScaleOpts = struct {
     max_color: u32,
 };
 
-pub fn twoColorScale(opts: ?TwoColorScaleOpts, format: ?*Format) ConditionalFormat {
+pub fn twoColorScale(opts: ?TwoColorScaleOpts) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_2_COLOR_SCALE;
     if (opts) |o| {
         f.inner.min_color = o.min_color;
         f.inner.max_color = o.max_color;
     }
-    f.setFormat(format);
     return f;
 }
 
@@ -440,7 +439,7 @@ pub const ThreeColorScaleOpts = struct {
     max_color: u32,
 };
 
-pub fn threeColorScale(opts: ?ThreeColorScaleOpts, format: ?*Format) ConditionalFormat {
+pub fn threeColorScale(opts: ?ThreeColorScaleOpts) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_3_COLOR_SCALE;
     if (opts) |o| {
@@ -448,7 +447,6 @@ pub fn threeColorScale(opts: ?ThreeColorScaleOpts, format: ?*Format) Conditional
         f.inner.mid_color = o.mid_color;
         f.inner.max_color = o.max_color;
     }
-    f.setFormat(format);
     return f;
 }
 
@@ -457,7 +455,14 @@ pub const BarAxisPosition = enum {
     midpoint,
     none,
 
-    pub fn toC(self: BarAxisPosition) c.lxw_conditional_bar_axis_position {
+    pub fn optToC(
+        self: ?BarAxisPosition,
+    ) c.lxw_conditional_bar_axis_position {
+        if (self) |b| return b.toC();
+        return c.LXW_CONDITIONAL_BAR_AXIS_AUTOMATIC;
+    }
+
+    pub fn toC(self: BarAxisPosition) u8 {
         return switch (self) {
             .automatic => c.LXW_CONDITIONAL_BAR_AXIS_AUTOMATIC,
             .midpoint => c.LXW_CONDITIONAL_BAR_AXIS_MIDPOINT,
@@ -471,7 +476,14 @@ pub const BarDirection = enum {
     right_to_left,
     left_to_right,
 
-    pub fn toC(self: BarDirection) c.lxw_conditional_bar_direction {
+    pub fn optToC(
+        self: ?BarDirection,
+    ) c.lxw_conditional_format_bar_direction {
+        if (self) |b| return b.toC();
+        return c.LXW_CONDITIONAL_BAR_DIRECTION_CONTEXT;
+    }
+
+    pub fn toC(self: BarDirection) u8 {
         return switch (self) {
             .context => c.LXW_CONDITIONAL_BAR_DIRECTION_CONTEXT,
             .right_to_left => c.LXW_CONDITIONAL_BAR_DIRECTION_RIGHT_TO_LEFT,
@@ -480,47 +492,104 @@ pub const BarDirection = enum {
     }
 };
 
+pub const RuleType = enum {
+    none,
+    minimum,
+    maximum,
+    number,
+    percent,
+    percentile,
+    formula,
+    auto_min,
+    auto_max,
+
+    pub fn toC(self: RuleType) u8 {
+        return switch (self) {
+            .none => c.LXW_CONDITIONAL_RULE_TYPE_NONE,
+            .minimum => c.LXW_CONDITIONAL_RULE_TYPE_MINIMUM,
+            .maximum => c.LXW_CONDITIONAL_RULE_TYPE_MAXIMUM,
+            .number => c.LXW_CONDITIONAL_RULE_TYPE_NUMBER,
+            .percent => c.LXW_CONDITIONAL_RULE_TYPE_PERCENT,
+            .percentile => c.LXW_CONDITIONAL_RULE_TYPE_PERCENTILE,
+            .formula => c.LXW_CONDITIONAL_RULE_TYPE_FORMULA,
+            .auto_min => c.LXW_CONDITIONAL_RULE_TYPE_AUTO_MIN,
+            .auto_max => c.LXW_CONDITIONAL_RULE_TYPE_AUTO_MAX,
+        };
+    }
+};
+
 pub const DataBarOpts = struct {
-    bar_axis_color: ?u32 = null,
-    bar_axis_position: ?BarAxisPosition = null,
-    bar_border_color: ?u32 = null,
-    bar_color: ?u32 = null,
-    bar_direction: ?BarDirection = null,
-    bar_negative_border_color: ?u32 = null,
-    bar_negative_border_color_same: ?bool = null,
-    bar_negative_color: ?u32 = null,
-    bar_negative_color_same: ?bool = null,
-    bar_no_border: ?bool = null,
+    axis_color: ?u32 = null,
+    axis_position: ?BarAxisPosition = null,
+    border_color: ?u32 = null,
+    color: ?u32 = null,
+    direction: ?BarDirection = null,
+    negative_border_color: ?u32 = null,
+    negative_border_color_same: ?bool = null,
+    negative_color: ?u32 = null,
+    negative_color_same: ?bool = null,
+    no_border: ?bool = null,
     bar_only: ?bool = null,
-    data_bar_2010: ?bool = null,
-    max_rule_type: ?c.lxw_conditional_rule_type = null,
+    solid: ?bool = null,
+    excel_2010_style: ?bool = null,
+    max_rule_type: ?RuleType = null,
     max_value: ?f64 = null,
     max_value_string: ?[]const u8 = null,
-    min_rule_type: ?c.lxw_conditional_rule_type = null,
+    min_rule_type: ?RuleType = null,
     min_value: ?f64 = null,
     min_value_string: ?[]const u8 = null,
 };
 
+pub fn optBoolToC(value: ?bool) u8 {
+    if (value) |v| return if (v) c.LXW_TRUE else c.LXW_FALSE;
+    return c.LXW_FALSE;
+}
+
 pub fn dataBar(opts: ?DataBarOpts) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_DATA_BAR;
-    if (opts) |o| {
-        f.inner.bar_only = o.bar_only orelse false;
-        if (o.bar_color) |color| {
-            if (color == false) {
-                f.inner.bar_color = c.LXW_COLOR_UNSET;
-            } else {
-                f.inner.bar_color = color;
-            }
-        }
-        if (o.bar_border_color) |color| {
-            if (color == false) {
-                f.inner.bar_border_color = c.LXW_COLOR_UNSET;
-            } else {
-                f.inner.bar_border_color = color;
-            }
-        }
-        f.inner.bar_solid = o.bar_solid orelse false;
+    if (opts == null) return f;
+    const o = opts.?;
+    f.inner.bar_only = optBoolToC(o.bar_only);
+    f.inner.bar_color = o.color orelse c.LXW_COLOR_UNSET;
+    f.inner.bar_border_color = o.border_color orelse c.LXW_COLOR_UNSET;
+    f.inner.bar_no_border = optBoolToC(o.no_border);
+    f.inner.bar_solid = optBoolToC(o.solid);
+    if (o.direction != null) {
+        f.inner.bar_direction = o.direction.?.toC();
+    }
+    if (o.axis_position != null) {
+        f.inner.bar_axis_position = o.axis_position.?.toC();
+    }
+    f.inner.bar_axis_color = o.axis_color orelse c.LXW_COLOR_UNSET;
+    f.inner.bar_negative_color =
+        o.negative_color orelse c.LXW_COLOR_UNSET;
+    f.inner.bar_negative_border_color =
+        o.negative_border_color orelse c.LXW_COLOR_UNSET;
+    f.inner.bar_negative_color_same =
+        optBoolToC(o.negative_color_same);
+    f.inner.bar_negative_border_color_same =
+        optBoolToC(o.negative_border_color_same);
+    f.inner.data_bar_2010 = optBoolToC(o.excel_2010_style);
+    if (o.max_rule_type != null) {
+        f.inner.max_rule_type = o.max_rule_type.?.toC();
+    }
+    if (o.max_value != null) {
+        f.inner.max_value = o.max_value.?;
+    }
+    const max_val_str_ptr = if (o.max_value_string) |s| s.ptr else null;
+    if (max_val_str_ptr != null) {
+        f.inner.max_value_string = max_val_str_ptr;
+    }
+    if (o.min_rule_type != null) {
+        f.inner.min_rule_type = o.min_rule_type.?.toC();
+    }
+    if (o.min_value != null) {
+        f.inner.min_value = o.min_value.?;
+    }
+    const min_val_str_ptr = if (o.min_value_string) |s| s.ptr else null;
+    if (min_val_str_ptr != null) {
+        f.inner.min_value_string = min_val_str_ptr;
     }
     return f;
 }
@@ -544,7 +613,7 @@ pub const IconSetStyle = enum {
     five_ratings,
     five_quarters,
 
-    fn toC(self: IconSetStyle) c.lxw_conditional_icon_set_style {
+    fn toC(self: IconSetStyle) u8 {
         return switch (self) {
             .three_arrows_colored => c.LXW_CONDITIONAL_ICONS_3_ARROWS_COLORED,
             .three_arrows_gray => c.LXW_CONDITIONAL_ICONS_3_ARROWS_GRAY,
@@ -579,10 +648,14 @@ pub fn iconSet(
 ) ConditionalFormat {
     var f = ConditionalFormat.blank();
     f.inner.type = c.LXW_CONDITIONAL_TYPE_ICON_SETS;
-    f.setFormat(format);
-    f.inner.icon_style = opts.icon_style.toC();
-    f.inner.icons_only = opts.icons_only orelse false;
-    f.inner.reverse_icons = opts.reverse_icons orelse false;
+    if (format != null) f.setFormat(format);
+    if (opts == null) return f;
+    const o = opts.?;
+    if (o.icon_style != null) {
+        f.inner.icon_style = o.icon_style.?.toC();
+    }
+    f.inner.icons_only = optBoolToC(o.icons_only);
+    f.inner.reverse_icons = optBoolToC(o.reverse_icons);
 
     return f;
 }
