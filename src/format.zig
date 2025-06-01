@@ -4,19 +4,19 @@ const error_utils = @import("error_utils.zig");
 
 /// Alignment options for cells
 pub const Alignment = enum(u8) {
-    None = 0,
-    Left = 1,
-    Center = 2,
-    Right = 3,
-    Fill = 4,
-    Justify = 5,
-    CenterAcross = 6,
-    Distributed = 7,
-    VerticalTop = 8,
-    VerticalBottom = 9,
-    VerticalCenter = 10,
-    VerticalJustify = 11,
-    VerticalDistributed = 12,
+    none = 0,
+    left = 1,
+    center = 2,
+    right = 3,
+    fill = 4,
+    justify = 5,
+    center_across = 6,
+    distributed = 7,
+    vertical_top = 8,
+    vertical_bottom = 9,
+    vertical_center = 10,
+    vertical_justify = 11,
+    vertical_distributed = 12,
 };
 
 /// Border styles for cells
