@@ -291,6 +291,25 @@ pub const Worksheet = struct {
         if (result != c.LXW_NO_ERROR) return error.WriteFailed;
     }
 
+    /// Write a unix time to a cell, optionally with formatting
+    pub fn writeUnixTime(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        unix_time: i64,
+        format: ?*format_mod.Format,
+    ) !void {
+        const format_ptr = if (format) |f| f.format else null;
+        const result = c.worksheet_write_unixtime(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            unix_time,
+            format_ptr,
+        );
+        if (result != c.LXW_NO_ERROR) return error.WriteFailed;
+    }
+
     /// Write a rich string to a cell using a cell reference (e.g., "A1", "B2")
     pub fn writeRichStringCell(
         self: *Worksheet,
