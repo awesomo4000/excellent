@@ -7,6 +7,7 @@ const chart = @import("chart.zig");
 const comment = @import("comment.zig");
 const cf = @import("conditional_format.zig");
 const DateTime = @import("date_time.zig").DateTime;
+const DataValidation = @import("data_validation.zig").Validation;
 
 /// Represents a worksheet within a workbook
 pub const Worksheet = struct {
@@ -842,5 +843,57 @@ pub const Worksheet = struct {
             &conditional_format_ptr.inner,
         );
         if (result != c.LXW_NO_ERROR) return error.ConditionalFormatFailed;
+    }
+
+    /// Apply data validation to a cell
+    pub fn validationCell(
+        self: *Worksheet,
+        row: usize,
+        col: usize,
+        validation: DataValidation,
+    ) !void {
+        const c_validation = try validation.toC(self.workbook.allocator);
+        defer self.workbook.allocator.destroy(c_validation);
+
+        const result = c.worksheet_data_validation_cell(
+            self.worksheet,
+            @intCast(row),
+            @intCast(col),
+            c_validation,
+        );
+        if (result != c.LXW_NO_ERROR) return error.DataValidationFailed;
+    }
+
+    /// Apply data validation to a cell using a cell reference (e.g., "A1", "B2")
+    pub fn validationCellRef(
+        self: *Worksheet,
+        cell_ref: []const u8,
+        validation: DataValidation,
+    ) !void {
+        const pos = try cell_utils.cell.strToRowCol(cell_ref);
+        try self.validationCell(pos.row, pos.col, validation);
+    }
+
+    /// Apply data validation to a range of cells
+    pub fn validationRange(
+        self: *Worksheet,
+        first_row: u32,
+        first_col: u16,
+        last_row: u32,
+        last_col: u16,
+        validation: DataValidation,
+    ) !void {
+        const c_validation = try validation.toC(self.workbook.allocator);
+        defer self.workbook.allocator.destroy(c_validation);
+
+        const result = c.worksheet_data_validation_range(
+            self.worksheet,
+            first_row,
+            first_col,
+            last_row,
+            last_col,
+            c_validation,
+        );
+        if (result != c.LXW_NO_ERROR) return error.DataValidationFailed;
     }
 };

@@ -106,6 +106,12 @@ pub const Format = struct {
         return self;
     }
 
+    /// Set foreground color
+    pub fn setFgColor(self: *Format, color: u32) *Format {
+        _ = c.format_set_fg_color(self.format, color);
+        return self;
+    }
+
     /// Set background color
     pub fn setBgColor(self: *Format, color: u32) *Format {
         _ = c.format_set_bg_color(self.format, color);
@@ -176,6 +182,12 @@ pub const Format = struct {
     /// Set text wrapping for a cell
     pub fn setTextWrap(self: *Format) *Format {
         _ = c.format_set_text_wrap(self.format);
+        return self;
+    }
+
+    /// Set indent for a cell
+    pub fn setIndent(self: *Format, indent: u8) *Format {
+        _ = c.format_set_indent(self.format, indent);
         return self;
     }
 };
