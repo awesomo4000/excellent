@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 const chart_mod = @import("chart.zig");
 
 /// Represents a chartsheet within a workbook

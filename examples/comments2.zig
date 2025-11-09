@@ -26,7 +26,7 @@ pub fn main() !void {
     // Create a text wrap format
     var text_wrap = try workbook.addFormat();
     _ = text_wrap.setTextWrap();
-    _ = text_wrap.setAlign(.VerticalTop);
+    _ = text_wrap.setAlign(.vertical_top);
 
     // Create worksheets directly rather than storing pointers to them
     var ws1 = try workbook.addWorksheet("Sheet1");

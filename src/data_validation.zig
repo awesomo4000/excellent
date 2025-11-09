@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 const DateTime = @import("date_time.zig").DateTime;
 const DateT = @import("date_time.zig").Date;
 const TimeT = @import("date_time.zig").Time;
@@ -392,8 +393,8 @@ pub fn ListFormula(value_formula: []const u8, options: Options) Validation {
 
 pub const Date = struct {
     pub fn between(
-        minimum: Date,
-        maximum: Date,
+        minimum: DateT,
+        maximum: DateT,
         options: Options,
     ) Validation {
         return Validation{
@@ -406,8 +407,8 @@ pub const Date = struct {
     }
 
     pub fn not_between(
-        minimum: Date,
-        maximum: Date,
+        minimum: DateT,
+        maximum: DateT,
         options: Options,
     ) Validation {
         return Validation{
@@ -419,7 +420,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn gt(value: Date, options: Options) Validation {
+    pub fn gt(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .greater_than,
@@ -428,7 +429,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn gte(value: Date, options: Options) Validation {
+    pub fn gte(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .greater_than_or_equal_to,
@@ -437,7 +438,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn lt(value: Date, options: Options) Validation {
+    pub fn lt(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .less_than,
@@ -446,7 +447,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn lte(value: Date, options: Options) Validation {
+    pub fn lte(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .less_than_or_equal_to,
@@ -455,7 +456,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn eql(value: Date, options: Options) Validation {
+    pub fn eql(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .equal_to,
@@ -464,7 +465,7 @@ pub const Date = struct {
         };
     }
 
-    pub fn not_eql(value: Date, options: Options) Validation {
+    pub fn not_eql(value: DateT, options: Options) Validation {
         return Validation{
             .validate = .date,
             .criteria = .not_equal_to,
@@ -476,8 +477,8 @@ pub const Date = struct {
 
 pub const Time = struct {
     pub fn between(
-        minimum: Time,
-        maximum: Time,
+        minimum: TimeT,
+        maximum: TimeT,
         options: Options,
     ) Validation {
         return Validation{
@@ -490,8 +491,8 @@ pub const Time = struct {
     }
 
     pub fn not_between(
-        minimum: Time,
-        maximum: Time,
+        minimum: TimeT,
+        maximum: TimeT,
         options: Options,
     ) Validation {
         return Validation{
@@ -503,7 +504,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn gt(value: Time, options: Options) Validation {
+    pub fn gt(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .greater_than,
@@ -512,7 +513,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn gte(value: Time, options: Options) Validation {
+    pub fn gte(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .greater_than_or_equal_to,
@@ -521,7 +522,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn lt(value: Time, options: Options) Validation {
+    pub fn lt(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .less_than,
@@ -530,7 +531,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn lte(value: Time, options: Options) Validation {
+    pub fn lte(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .less_than_or_equal_to,
@@ -539,7 +540,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn eql(value: Time, options: Options) Validation {
+    pub fn eql(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .equal_to,
@@ -548,7 +549,7 @@ pub const Time = struct {
         };
     }
 
-    pub fn not_eql(value: Time, options: Options) Validation {
+    pub fn not_eql(value: TimeT, options: Options) Validation {
         return Validation{
             .validate = .time,
             .criteria = .not_equal_to,
@@ -674,9 +675,10 @@ pub const Validation = struct {
     minimum_datetime: ?DateTime = null,
     maximum_datetime: ?DateTime = null,
 
-    // Length values
+    // Length values (stored as numbers in C API)
     minimum_length: ?u32 = null,
     maximum_length: ?u32 = null,
+    value_length: ?u32 = null,
 
     // Messages
     options: Options,
@@ -782,9 +784,10 @@ pub const Validation = struct {
             };
         }
 
-        // Set length values
-        if (self.minimum_length) |min| data_validation.minimum_length = min;
-        if (self.maximum_length) |max| data_validation.maximum_length = max;
+        // Set length values (C API stores these as numbers)
+        if (self.minimum_length) |min| data_validation.minimum_number = @floatFromInt(min);
+        if (self.maximum_length) |max| data_validation.maximum_number = @floatFromInt(max);
+        if (self.value_length) |val| data_validation.value_number = @floatFromInt(val);
 
         // Set messages
         if (self.options.input_title) |title| {

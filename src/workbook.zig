@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 const error_utils = @import("error_utils.zig");
 const worksheet_mod = @import("worksheet.zig");
 const format_mod = @import("format.zig");
@@ -11,10 +12,10 @@ pub const Workbook = struct {
     filename: []const u8,
     workbook: *c.lxw_workbook,
     isOpen: bool = false,
-    formats: std.ArrayList(*format_mod.Format) = std.ArrayList(*format_mod.Format).init(std.heap.page_allocator),
-    charts: std.ArrayList(*chart_mod.Chart) = std.ArrayList(*chart_mod.Chart).init(std.heap.page_allocator),
-    chartsheets: std.ArrayList(*chartsheet_mod.Chartsheet) = std.ArrayList(*chartsheet_mod.Chartsheet).init(std.heap.page_allocator),
-    conditional_formats: std.ArrayList(*cf.ConditionalFormat) = std.ArrayList(*cf.ConditionalFormat).init(std.heap.page_allocator),
+    formats: std.ArrayList(*format_mod.Format) = .{},
+    charts: std.ArrayList(*chart_mod.Chart) = .{},
+    chartsheets: std.ArrayList(*chartsheet_mod.Chartsheet) = .{},
+    conditional_formats: std.ArrayList(*cf.ConditionalFormat) = .{},
     pub fn create(
         allocator: std.mem.Allocator,
         filename: []const u8,
@@ -29,10 +30,10 @@ pub const Workbook = struct {
             .filename = filename,
             .workbook = c_workbook,
             .isOpen = true,
-            .formats = std.ArrayList(*format_mod.Format).init(allocator),
-            .charts = std.ArrayList(*chart_mod.Chart).init(allocator),
-            .chartsheets = std.ArrayList(*chartsheet_mod.Chartsheet).init(allocator),
-            .conditional_formats = std.ArrayList(*cf.ConditionalFormat).init(allocator),
+            .formats = .{},
+            .charts = .{},
+            .chartsheets = .{},
+            .conditional_formats = .{},
         };
 
         return workbook;
@@ -56,25 +57,25 @@ pub const Workbook = struct {
             format.deinit();
             self.allocator.destroy(format);
         }
-        self.formats.deinit();
+        self.formats.deinit(self.allocator);
         // deinit the charts
         for (self.charts.items) |chart| {
             chart.deinit();
             self.allocator.destroy(chart);
         }
-        self.charts.deinit();
+        self.charts.deinit(self.allocator);
         // deinit the chartsheets
         for (self.chartsheets.items) |chartsheet| {
             chartsheet.deinit();
             self.allocator.destroy(chartsheet);
         }
-        self.chartsheets.deinit();
+        self.chartsheets.deinit(self.allocator);
         // deinit the conditional formats
         for (self.conditional_formats.items) |conditional_format| {
             conditional_format.deinit();
             self.allocator.destroy(conditional_format);
         }
-        self.conditional_formats.deinit();
+        self.conditional_formats.deinit(self.allocator);
         self.allocator.destroy(self);
     }
 
@@ -90,7 +91,7 @@ pub const Workbook = struct {
             .format = c_format,
             .allocator = self.allocator,
         };
-        try self.formats.append(format);
+        try self.formats.append(self.allocator, format);
         return format;
     }
 
@@ -99,14 +100,14 @@ pub const Workbook = struct {
 
         const chart = try self.allocator.create(chart_mod.Chart);
         chart.* = try chart_mod.Chart.init(self.allocator, self.workbook, chart_type);
-        try self.charts.append(chart);
+        try self.charts.append(self.allocator, chart);
         return chart;
     }
 
     pub fn addConditionalFormat(self: *Workbook, format: cf.ConditionalFormat) !*cf.ConditionalFormat {
         const conditional_format = try self.allocator.create(cf.ConditionalFormat);
         conditional_format.* = format;
-        try self.conditional_formats.append(conditional_format);
+        try self.conditional_formats.append(self.allocator, conditional_format);
         return conditional_format;
     }
 

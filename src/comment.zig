@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 
 /// Options for cell comments
 pub const CommentOptions = struct {

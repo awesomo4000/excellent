@@ -4,8 +4,6 @@
 
 const std = @import("std");
 const fs = std.fs;
-const stdout = std.io.getStdOut();
-const stdoutWriter = stdout.writer();
 
 const passed_autocheck_file = "autochecked";
 const Example = struct {
@@ -83,7 +81,7 @@ fn setupExamples(
     const examples_dir = "testing/zig-c-binding-examples";
     const examples_out_dir = "examples";
 
-    var examples = std.ArrayList(Example).init(allocator);
+    var examples = std.ArrayList(Example){};
 
     // Get all example files
     var dir = try fs.cwd().openDir(examples_dir, .{ .iterate = true });
@@ -139,7 +137,7 @@ fn setupExamples(
                 defer allocator.free(ref_path);
                 break :blk fs.cwd().access(ref_path, .{}) != error.FileNotFound;
             };
-            try examples.append(.{
+            try examples.append(allocator, .{
                 .name = name,
                 .implemented = implemented,
                 .verified = verified,
@@ -175,27 +173,27 @@ fn printShortOutput(
     examples: std.ArrayList(Example),
     allocator: std.mem.Allocator,
 ) !void {
-    var impl_names = std.ArrayList([]const u8).init(allocator);
-    defer impl_names.deinit();
-    var verified_names = std.ArrayList([]const u8).init(allocator);
-    defer verified_names.deinit();
-    var autocheck_passed_names = std.ArrayList([]const u8).init(allocator);
-    defer autocheck_passed_names.deinit();
-    var have_ref_xlsx_names = std.ArrayList([]const u8).init(allocator);
-    defer have_ref_xlsx_names.deinit();
+    var impl_names = std.ArrayList([]const u8){};
+    defer impl_names.deinit(allocator);
+    var verified_names = std.ArrayList([]const u8){};
+    defer verified_names.deinit(allocator);
+    var autocheck_passed_names = std.ArrayList([]const u8){};
+    defer autocheck_passed_names.deinit(allocator);
+    var have_ref_xlsx_names = std.ArrayList([]const u8){};
+    defer have_ref_xlsx_names.deinit(allocator);
 
     for (examples.items) |example| {
         if (example.implemented) {
-            try impl_names.append(example.name);
+            try impl_names.append(allocator, example.name);
             if (example.verified) {
-                try verified_names.append(example.name);
+                try verified_names.append(allocator, example.name);
             }
             if (example.autocheck_passed) {
-                try autocheck_passed_names.append(example.name);
+                try autocheck_passed_names.append(allocator, example.name);
             }
         }
         if (example.have_ref_xlsx) {
-            try have_ref_xlsx_names.append(example.name);
+            try have_ref_xlsx_names.append(allocator, example.name);
         }
     }
 
@@ -226,6 +224,10 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
+    var stdout_buffer: [4096]u8 = undefined;
+    var stdout_writer_impl = std.fs.File.stdout().writer(&stdout_buffer);
+    const writer = &stdout_writer_impl.interface;
+
     var args = try std.process.argsWithAllocator(allocator);
     defer args.deinit();
     _ = args.skip(); // skip program name
@@ -236,13 +238,13 @@ pub fn main() !void {
         for (examples.items) |example| {
             allocator.free(example.name);
         }
-        examples.deinit();
+        examples.deinit(allocator);
     }
 
     // If specific example requested, show only that
     if (example_arg) |arg| {
         if (std.mem.eql(u8, arg, "--short")) {
-            try printShortOutput(stdoutWriter, examples, allocator);
+            try printShortOutput(writer, examples, allocator);
             return;
         }
 
@@ -253,7 +255,7 @@ pub fn main() !void {
         ) orelse arg.len];
         for (examples.items) |example| {
             if (std.mem.eql(u8, example.name, name)) {
-                try stdoutWriter.print(
+                try writer.print(
                     "{s}:{s},{s},{s},{s}\n",
                     .{
                         example.name,
@@ -266,11 +268,11 @@ pub fn main() !void {
                 return;
             }
         }
-        try stdoutWriter.print(
+        try writer.print(
             "err: Example '{s}' not found\n",
             .{name},
         );
-        try stdoutWriter.print(
+        try writer.print(
             "Usage: status [--short|example_name]\n",
             .{},
         );
@@ -287,7 +289,7 @@ pub fn main() !void {
         if (example.verified) verified += 1;
         if (example.autocheck_passed) autocheck_passed += 1;
         if (example.have_ref_xlsx) have_ref_xlsx += 1;
-        try stdoutWriter.print(
+        try writer.print(
             "{s: >30}  {s} {s} {s} {s}\n",
             .{
                 example.name,
@@ -298,7 +300,7 @@ pub fn main() !void {
             },
         );
     }
-    try stdoutWriter.print(
+    try writer.print(
         "\n+\n" ++
             "+        zig  {d}/{d} ({d:.1}%)\n" ++
             "+  autocheck  {d}/{d} ({d:.1}%)\n" ++

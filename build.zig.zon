@@ -2,11 +2,11 @@
     .name = .excellent,
     .version = "0.0.0",
     .fingerprint = 0xa217bac17a577543,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.2",
     .dependencies = .{
-        .xlsxwriter = .{
-            .url = "https://github.com/awesomo4000/zig-xlsxwriter/archive/refs/heads/main.tar.gz",
-            .hash = "zigxlsxwriter-0.1.0-Bkkot8K-ZAG2GG3OLzKDCmONI5sAzX4xJTBIuQLG4DP0",
+        .libxlsxwriter = .{
+            .url = "https://github.com/jmcnamara/libxlsxwriter/archive/refs/heads/main.tar.gz",
+            .hash = "libxlsxwriter-1.1.9-Dq0v8rpSHACov17EF3xi28OUFnm4zg6mFsW-4fEsyrxN",
         },
     },
     .paths = .{

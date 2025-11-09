@@ -45,8 +45,8 @@ pub fn main() !void {
 
     // Set the chart title and axis names
     try chart.setTitle("Cladding types");
-    try chart.setXaxisName("Region");
-    try chart.setYaxisName("Number of houses");
+    try chart.setXAxisName("Region");
+    try chart.setYAxisName("Number of houses");
 
     // Configure and add the chart series patterns
     try series1.setPattern(.{

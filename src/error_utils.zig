@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 
 /// Error type specific to the Excellent library
 pub const XlsxError = error{

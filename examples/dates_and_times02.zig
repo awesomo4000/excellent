@@ -23,8 +23,8 @@ pub fn main() !void {
         .month = 2,
         .day = 28,
         .hour = 12,
-        .min = 0,
-        .sec = 0.0,
+        .minute = 0,
+        .second = 0.0,
     };
 
     // Add a format with date formatting.

@@ -57,9 +57,8 @@ pub fn main() !void {
 
         try worksheet.writeString(row, 0, expense.item, null);
 
-        // Convert to lxw_datetime and write the date
-        var datetime = expense.date.toLxwDateTime();
-        try worksheet.writeDateTime(row, 1, &datetime, date_format);
+        // Write the date
+        try worksheet.writeDateTime(row, 1, expense.date, date_format);
 
         try worksheet.writeNumber(row, 2, @floatFromInt(expense.cost), money);
     }

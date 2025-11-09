@@ -46,8 +46,8 @@ pub fn main() !void {
     try series.setName("=Sheet1!$C$1");
     // Add chart title and axis labels
     try chart1.setTitle("Results of sample analysis");
-    try chart1.setXaxisName("Test number");
-    try chart1.setYaxisName("Sample length (mm)");
+    try chart1.setXAxisName("Test number");
+    try chart1.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     _ = chart1.setStyle(11);
@@ -70,8 +70,8 @@ pub fn main() !void {
 
     // Add chart title and axis labels
     try chart2.setTitle("Results of sample analysis");
-    try chart2.setXaxisName("Test number");
-    try chart2.setYaxisName("Sample length (mm)");
+    try chart2.setXAxisName("Test number");
+    try chart2.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     _ = chart2.setStyle(12);
@@ -94,8 +94,8 @@ pub fn main() !void {
 
     // Add chart title and axis labels
     try chart3.setTitle("Results of sample analysis");
-    try chart3.setXaxisName("Test number");
-    try chart3.setYaxisName("Sample length (mm)");
+    try chart3.setXAxisName("Test number");
+    try chart3.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     _ = chart3.setStyle(13);
@@ -118,8 +118,8 @@ pub fn main() !void {
 
     // Add chart title and axis labels
     try chart4.setTitle("Results of sample analysis");
-    try chart4.setXaxisName("Test number");
-    try chart4.setYaxisName("Sample length (mm)");
+    try chart4.setXAxisName("Test number");
+    try chart4.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     _ = chart4.setStyle(14);
@@ -142,8 +142,8 @@ pub fn main() !void {
 
     // Add chart title and axis labels
     try chart5.setTitle("Results of sample analysis");
-    try chart5.setXaxisName("Test number");
-    try chart5.setYaxisName("Sample length (mm)");
+    try chart5.setXAxisName("Test number");
+    try chart5.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     _ = chart5.setStyle(15);

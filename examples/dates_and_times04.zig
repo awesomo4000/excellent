@@ -14,8 +14,8 @@ pub fn main() !void {
         .month = 1,
         .day = 23,
         .hour = 12,
-        .min = 30,
-        .sec = 5.123,
+        .minute = 30,
+        .second = 5.123,
     };
 
     var row: u32 = 0;

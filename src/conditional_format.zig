@@ -1,6 +1,7 @@
 const std = @import("std");
 const Format = @import("format.zig").Format;
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 
 // const CellCriteria = enum {
 //     equal_to,

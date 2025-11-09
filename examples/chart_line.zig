@@ -78,8 +78,8 @@ pub fn main() !void {
 
     // Add a chart title and some axis labels
     try chart1.setTitle("Results of sample analysis");
-    try chart1.setXaxisName("Test number");
-    try chart1.setYaxisName("Sample length (mm)");
+    try chart1.setXAxisName("Test number");
+    try chart1.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     chart1.setStyle(10);
@@ -102,8 +102,8 @@ pub fn main() !void {
 
     // Add a chart title and some axis labels
     try chart2.setTitle("Results of sample analysis");
-    try chart2.setXaxisName("Test number");
-    try chart2.setYaxisName("Sample length (mm)");
+    try chart2.setXAxisName("Test number");
+    try chart2.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     chart2.setStyle(12);
@@ -126,8 +126,8 @@ pub fn main() !void {
 
     // Add a chart title and some axis labels
     try chart3.setTitle("Results of sample analysis");
-    try chart3.setXaxisName("Test number");
-    try chart3.setYaxisName("Sample length (mm)");
+    try chart3.setXAxisName("Test number");
+    try chart3.setYAxisName("Sample length (mm)");
 
     // Set an Excel chart style
     chart3.setStyle(13);

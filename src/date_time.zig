@@ -1,4 +1,5 @@
-const xlswriter = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 
 pub const Date = struct {
     year: u16 = 0,
@@ -42,8 +43,8 @@ pub const DateTime = struct {
     minute: u8 = 0,
     second: f64 = 0,
 
-    pub fn toC(self: DateTime) xlswriter.lxw_datetime {
-        return xlswriter.lxw_datetime{
+    pub fn toC(self: DateTime) c.lxw_datetime {
+        return c.lxw_datetime{
             .year = self.year,
             .month = self.month,
             .day = self.day,

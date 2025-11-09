@@ -73,8 +73,8 @@ pub fn main() !void {
 
     // Add chart title and axis labels
     try chart.setTitle("Results of sample analysis");
-    try chart.setXaxisName("Test number");
-    try chart.setYaxisName("Sample length (mm)");
+    try chart.setXAxisName("Test number");
+    try chart.setYAxisName("Sample length (mm)");
 
     // Set chart style
     chart.setStyle(11);

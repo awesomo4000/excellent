@@ -45,12 +45,12 @@ pub const cell = struct {
         if (col_index > 16383) return error.ColumnOutOfRange; // Excel's limit
 
         var col_num = col_index + 1; // Convert to 1-indexed for the algorithm
-        var result = std.ArrayList(u8).init(std.heap.page_allocator);
-        defer result.deinit();
+        var result: std.ArrayList(u8) = .{};
+        defer result.deinit(std.heap.page_allocator);
 
         while (col_num > 0) {
             const remainder = @mod(col_num - 1, 26);
-            try result.append(@as(u8, @intCast(remainder)) + 'A');
+            try result.append(std.heap.page_allocator, @as(u8, @intCast(remainder)) + 'A');
             col_num = @divFloor(col_num - 1, 26);
         }
 

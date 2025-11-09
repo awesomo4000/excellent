@@ -10,6 +10,8 @@
 const std = @import("std");
 const excel = @import("excellent");
 const Valid = excel.DataValidation;
+const Date = excel.Date;
+const Time = excel.Time;
 const DateTime = excel.DateTime;
 
 // Write some data to the worksheet.
@@ -85,7 +87,7 @@ pub fn main() !void {
     );
 
     var validator = Valid.Integer.between(1, 10, .{});
-    try worksheet.dataValidationCell(2, 1, validator);
+    try worksheet.validationCell(2, 1, validator);
 
     //
     // Example 2. Limiting input to an integer outside a fixed range.
@@ -107,7 +109,7 @@ pub fn main() !void {
         "=F3",
         .{},
     );
-    try worksheet.dataValidationCellRef("B5", validator);
+    try worksheet.validationCellRef("B5", validator);
 
     //
     // Example 3. Limiting input to an integer greater than a fixed value.
@@ -118,9 +120,9 @@ pub fn main() !void {
         "Enter an integer greater than 0",
         null,
     );
-    // DataValidation.integer.greater_than()
-    validator = Valid.Integer.greater_than(0, .{});
-    try worksheet.dataValidationCell(6, 1, validator);
+    // DataValidation.integer.gt()
+    validator = Valid.Integer.gt(0, .{});
+    try worksheet.validationCell(6, 1, validator);
 
     //
     // Example 4. Limiting input to an integer less than a fixed value.
@@ -133,7 +135,7 @@ pub fn main() !void {
     );
 
     validator = Valid.Integer.lt(10, .{});
-    try worksheet.dataValidationCell(8, 1, validator);
+    try worksheet.validationCell(8, 1, validator);
 
     //
     // Example 5. Limiting input to a decimal in a fixed range.
@@ -146,7 +148,7 @@ pub fn main() !void {
     );
 
     validator = Valid.Decimal.between(0.1, 0.5, .{});
-    try worksheet.dataValidationCell(10, 1, validator);
+    try worksheet.validationCell(10, 1, validator);
 
     //
     // Example 6. Limiting input to a value in a dropdown list.
@@ -159,8 +161,8 @@ pub fn main() !void {
     );
 
     const list_values = [_][]const u8{ "open", "high", "close" };
-    validator = Valid.list(&list_values, .{});
-    try worksheet.dataValidationCell(12, 1, validator);
+    validator = Valid.List(&list_values, .{});
+    try worksheet.validationCell(12, 1, validator);
 
     //
     // Example 7. Limiting input to a value in a dropdown list.
@@ -172,8 +174,8 @@ pub fn main() !void {
         null,
     );
 
-    validator = Valid.listFormula("=$E$4:$G$4", .{});
-    try worksheet.dataValidationCellRef("B14", validator);
+    validator = Valid.ListFormula("=$E$4:$G$4", .{});
+    try worksheet.validationCellRef("B14", validator);
 
     //
     // Example 8. Limiting input to a date in a fixed range.
@@ -185,25 +187,19 @@ pub fn main() !void {
         null,
     );
 
-    const datetime1 = DateTime{
+    const date1 = Date{
         .year = 2024,
         .month = 1,
         .day = 1,
-        .hour = 0,
-        .minute = 0,
-        .second = 0,
     };
-    const datetime2 = DateTime{
+    const date2 = Date{
         .year = 2024,
         .month = 12,
         .day = 12,
-        .hour = 0,
-        .minute = 0,
-        .second = 0,
     };
 
-    validator = Valid.Date.between(datetime1, datetime2, .{});
-    try worksheet.dataValidationCell(16, 1, validator);
+    validator = Valid.Date.between(date1, date2, .{});
+    try worksheet.validationCell(16, 1, validator);
 
     //
     // Example 9. Limiting input to a time in a fixed range.
@@ -215,25 +211,19 @@ pub fn main() !void {
         null,
     );
 
-    const datetime3 = DateTime{
-        .year = 0,
-        .month = 0,
-        .day = 0,
+    const time1 = Time{
         .hour = 6,
         .minute = 0,
         .second = 0,
     };
-    const datetime4 = DateTime{
-        .year = 0,
-        .month = 0,
-        .day = 0,
+    const time2 = Time{
         .hour = 12,
         .minute = 0,
         .second = 0,
     };
 
-    validator = Valid.Time.between(datetime3, datetime4, .{});
-    try worksheet.dataValidationCell(18, 1, validator);
+    validator = Valid.Time.between(time1, time2, .{});
+    try worksheet.validationCell(18, 1, validator);
 
     //
     // Example 10. Limiting input to a string greater than a fixed length.
@@ -245,8 +235,8 @@ pub fn main() !void {
         null,
     );
 
-    validator = Valid.Length.greater_than(3, .{});
-    try worksheet.dataValidationCell(20, 1, validator);
+    validator = Valid.Length.gt(3, .{});
+    try worksheet.validationCell(20, 1, validator);
 
     //
     // Example 11. Limiting input based on a formula.
@@ -258,8 +248,8 @@ pub fn main() !void {
         null,
     );
 
-    validator = Valid.formula("=AND(F5=50,G5=60)", .{});
-    try worksheet.dataValidationCell(22, 1, validator);
+    validator = Valid.CustomFormula("=AND(F5=50,G5=60)", .{});
+    try worksheet.validationCell(22, 1, validator);
 
     //
     // Example 12. Displaying and modifying data validation messages.
@@ -296,7 +286,7 @@ pub fn main() !void {
         .error_title = "Input value is not valid!",
         .error_message = "It should be an integer between 1 and 100",
     });
-    try worksheet.dataValidationCell(26, 1, validator);
+    try worksheet.validationCell(26, 1, validator);
 
     //
     // Example 14. Displaying and modifying data validation messages.
@@ -315,7 +305,7 @@ pub fn main() !void {
         .error_message = "It should be an integer between 1 and 100",
         .error_type = .information,
     });
-    try worksheet.dataValidationCellRef("B29", validator);
+    try worksheet.validationCellRef("B29", validator);
 
     try workbook.close();
 }

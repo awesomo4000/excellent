@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 const format_mod = @import("format.zig");
 const cell_utils = @import("cell_utils.zig");
 const styled = @import("styled.zig");

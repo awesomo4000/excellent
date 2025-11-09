@@ -69,14 +69,14 @@ pub fn main() !void {
     chart.setTitleFont(titleFont);
 
     // Configure Y axis with fonts
-    try chart.setYaxisName("Units");
-    chart.setYaxisNameFont(yAxisNameFont);
-    chart.setYaxisNumFont(yAxisNumFont);
+    try chart.setYAxisName("Units");
+    chart.setYAxisNameFont(yAxisNameFont);
+    chart.setYAxisNumFont(yAxisNumFont);
 
     // Configure X axis with fonts
-    try chart.setXaxisName("Month");
-    chart.setXaxisNameFont(xAxisNameFont);
-    chart.setXaxisNumFont(xAxisNumFont);
+    try chart.setXAxisName("Month");
+    chart.setXAxisNameFont(xAxisNameFont);
+    chart.setXAxisNumFont(xAxisNumFont);
 
     // Configure legend position and font
     chart.setLegendPosition(.bottom);

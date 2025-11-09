@@ -2,7 +2,8 @@ const std = @import("std");
 const Format = @import("format.zig").Format;
 const Worksheet = @import("worksheet.zig").Worksheet;
 const Workbook = @import("workbook.zig").Workbook;
-const c = @import("xlsxwriter");
+const xlsxwriter = @import("xlsxwriter");
+const c = xlsxwriter.c;
 
 /// Represents text with associated formatting
 pub const StyledText = struct {
@@ -92,8 +93,8 @@ pub const StyledWriter = struct {
     pub fn printStyled(self: *StyledWriter, comptime fmt: []const u8, args: anytype) !void {
         const ArgsType = @TypeOf(args);
         const fields = std.meta.fields(ArgsType);
-        var fragments = std.ArrayList(c.lxw_rich_string_tuple).init(self.worksheet.workbook.allocator);
-        defer fragments.deinit();
+        var fragments: std.ArrayList(c.lxw_rich_string_tuple) = .{};
+        defer fragments.deinit(self.worksheet.workbook.allocator);
 
         // First, calculate total string length needed
         var total_len: usize = 0;
@@ -133,7 +134,7 @@ pub const StyledWriter = struct {
             if (pos > 0) {
                 const text = buffer[buffer_pos .. buffer_pos + pos :0];
                 @memcpy(text[0..pos], fmt[current_pos .. current_pos + pos]);
-                try fragments.append(.{
+                try fragments.append(self.worksheet.workbook.allocator, .{
                     .format = null,
                     .string = text.ptr,
                 });
@@ -146,7 +147,7 @@ pub const StyledWriter = struct {
                 const text = buffer[buffer_pos .. buffer_pos + value.text.len :0];
                 @memcpy(text[0..value.text.len], value.text);
                 const format_ptr = if (value.style) |s| s.format else null;
-                try fragments.append(.{
+                try fragments.append(self.worksheet.workbook.allocator, .{
                     .format = format_ptr,
                     .string = text.ptr,
                 });
@@ -154,7 +155,7 @@ pub const StyledWriter = struct {
             } else {
                 const text = buffer[buffer_pos .. buffer_pos + value.len :0];
                 @memcpy(text[0..value.len], value);
-                try fragments.append(.{
+                try fragments.append(self.worksheet.workbook.allocator, .{
                     .format = null,
                     .string = text.ptr,
                 });
@@ -167,7 +168,7 @@ pub const StyledWriter = struct {
             const remaining_len = fmt.len - current_pos;
             const text = buffer[buffer_pos .. buffer_pos + remaining_len :0];
             @memcpy(text[0..remaining_len], fmt[current_pos..]);
-            try fragments.append(.{
+            try fragments.append(self.worksheet.workbook.allocator, .{
                 .format = null,
                 .string = text.ptr,
             });

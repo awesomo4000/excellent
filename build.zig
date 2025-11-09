@@ -4,12 +4,25 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // Add a dependency on the xlsxwriter library
-    const xlsxwriter_dep =
-        b.dependency("xlsxwriter", .{
+    // Add a dependency on the libxlsxwriter C library
+    // Note: USE_SYSTEM_MINIZIP has inverted logic in upstream build.zig
+    // Setting to true actually includes vendored minizip sources
+    const libxlsxwriter_dep =
+        b.dependency("libxlsxwriter", .{
             .target = target,
             .optimize = optimize,
+            .USE_SYSTEM_MINIZIP = true,
         });
+
+    // Create our xlsxwriter wrapper module
+    const xlsxwriter_mod = b.addModule("xlsxwriter", .{
+        .root_source_file = b.path("src/xlsxwriter/xlsxwriter.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // Link the C library to our wrapper
+    xlsxwriter_mod.linkLibrary(libxlsxwriter_dep.artifact("xlsxwriter"));
 
     // Add a module for the excellent library
     const lib_mod = b.addModule("excellent", .{
@@ -18,16 +31,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    lib_mod.addImport("xlsxwriter", xlsxwriter_dep.module(
-        "xlsxwriter",
-    ));
-
-    const mktmp_mod = b.addModule("mktmp", .{
-        .root_source_file = b.path("src/mktmp.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    lib_mod.addImport("mktmp", mktmp_mod);
+    lib_mod.addImport("xlsxwriter", xlsxwriter_mod);
 
     // Add a clean step that uses std.fs operations
     const clean_step = b.step("clean", "Clean up.");
@@ -67,7 +71,6 @@ pub fn build(b: *std.Build) void {
 
     const lib_unit_tests = b.addTest(.{
         .root_module = lib_mod,
-        .strip = false,
         .name = "excellent_test",
     });
 
