@@ -5,7 +5,8 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .xlsxwriter = .{
-            .path = "../zig-xlsxwriter",
+            .url = "https://github.com/awesomo4000/zig-xlsxwriter/archive/refs/heads/main.tar.gz",
+            .hash = "zigxlsxwriter-0.1.0-Bkkot8K-ZAG2GG3OLzKDCmONI5sAzX4xJTBIuQLG4DP0",
         },
     },
     .paths = .{
